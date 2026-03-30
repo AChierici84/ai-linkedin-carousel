@@ -14,7 +14,9 @@ from PIL import Image, ImageStat
 def _markdown_inline_to_html(text):
     escaped = escape(text)
     # Convert markdown bold (**text**) to reportlab paragraph bold tags.
-    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", escaped)
+    html = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", escaped)
+    html = re.sub(r"(?<!\*)\*(?!\*)([^*]+?)(?<!\*)\*(?!\*)", r"<i>\1</i>", html)
+    return re.sub(r"(?<!\w)_(?!_)(.+?)(?<!_)_(?!\w)", r"<i>\1</i>", html)
 
 
 def _draw_background(pdf, background_image_path, page_width, page_height):
