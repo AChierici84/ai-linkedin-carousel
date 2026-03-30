@@ -8,6 +8,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import HexColor
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from PIL import Image, ImageDraw, ImageStat
 
@@ -40,13 +42,47 @@ THEME_LIBRARY = {
     },
 }
 
+FONT_REGISTRY = {
+    "SegoeUISymbol": os.path.join(os.environ.get("WINDIR", "C:\\Windows"), "Fonts", "seguisym.ttf"),
+    "SegoeUIEmoji": os.path.join(os.environ.get("WINDIR", "C:\\Windows"), "Fonts", "seguiemj.ttf"),
+}
+
+ICON_FONT_MAP = {
+    "→": "SegoeUISymbol",
+    "➡": "SegoeUISymbol",
+    "✔": "SegoeUISymbol",
+    "⚖": "SegoeUISymbol",
+    "❌": "SegoeUISymbol",
+    "💡": "SegoeUIEmoji",
+    "🏥": "SegoeUIEmoji",
+    "👉": "SegoeUIEmoji",
+    "✅": "SegoeUIEmoji",
+    "🚀": "SegoeUIEmoji",
+}
+
+
+def _register_optional_fonts():
+    for font_name, font_path in FONT_REGISTRY.items():
+        if font_name in pdfmetrics.getRegisteredFontNames():
+            continue
+        if os.path.isfile(font_path):
+            pdfmetrics.registerFont(TTFont(font_name, font_path))
+
+
+def _apply_icon_font_spans(text):
+    for icon, font_name in ICON_FONT_MAP.items():
+        if font_name in pdfmetrics.getRegisteredFontNames():
+            text = text.replace(icon, f'<font name="{font_name}">{icon}</font>')
+    return text
+
 
 def _markdown_inline_to_html(text):
-    escaped = escape(text)
+    escaped = escape(text.replace("\ufe0f", ""))
     # Convert markdown bold (**text**) to reportlab paragraph bold tags.
     html = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", escaped)
     html = re.sub(r"(?<!\*)\*(?!\*)([^*]+?)(?<!\*)\*(?!\*)", r"<i>\1</i>", html)
-    return re.sub(r"(?<!\w)_(?!_)(.+?)(?<!_)_(?!\w)", r"<i>\1</i>", html)
+    html = re.sub(r"(?<!\w)_(?!_)(.+?)(?<!_)_(?!\w)", r"<i>\1</i>", html)
+    return _apply_icon_font_spans(html)
 
 
 def _mix_colors(color_a, color_b, ratio):
@@ -354,6 +390,7 @@ def _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path):
 
 
 def generatePdf(processed_contents, input_file_path):
+    _register_optional_fonts()
     project_root = os.path.dirname(os.path.abspath(__file__))
     background_variants = _get_background_variants(project_root)
 
