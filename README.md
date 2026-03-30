@@ -9,9 +9,12 @@ Ogni sezione del Markdown viene trasformata in una pagina del PDF. Per ogni imma
 - Converte un file Markdown in un carousel PDF multipagina.
 - Interpreta titoli Markdown `#`, `##`, `###`.
 - Interpreta il grassetto inline con `**testo**`.
+- Interpreta il corsivo inline con `*testo*` e `_testo_`.
 - Interpreta liste con `* elemento` oppure `- elemento`.
+- Genera una variante automatica con un unico background correlato al contenuto del carousel.
 - Usa automaticamente ogni sfondo `bkg1.png`, `bkg2.png`, `bkg3.png`, ecc.
 - Genera un PDF separato per ogni sfondo con suffisso `_bkgN`.
+- Salva anche lo sfondo generato automaticamente in `output/<nomefile>_auto_background.png`.
 - Se lo sfondo e scuro usa testo chiaro.
 - I titoli usano blu su sfondi chiari e azzurro su sfondi scuri.
 
@@ -77,6 +80,8 @@ python processMd.py post.md
 
 Il comando cerca automaticamente il file in `input/post.md`.
 
+Inoltre genera sempre una variante `*_auto.pdf` con uno sfondo creato a partire dal testo complessivo del carousel.
+
 ## Output
 
 Se nella root sono presenti ad esempio:
@@ -87,9 +92,14 @@ Se nella root sono presenti ad esempio:
 
 e il file di input e `post.md`, i file generati saranno:
 
+- `output/post_auto.pdf`
 - `output/post_bkg1.pdf`
 - `output/post_bkg2.pdf`
 - `output/post_bkg3.pdf`
+
+L'asset PNG usato per la variante automatica viene salvato in:
+
+- `output/post_auto_background.png`
 
 ## Regole di stile applicate
 
@@ -97,12 +107,14 @@ e il file di input e `post.md`, i file generati saranno:
 - Corpo del testo e bullet con dimensione aumentata.
 - Sfondo applicato a tutta la pagina.
 - Colore del testo adattato automaticamente alla luminosita media dello sfondo.
+- La variante automatica sceglie palette e pattern in base a parole chiave del contenuto, evitando pattern a griglia.
 
 ## Limiti attuali
 
 - Non interpreta tutto il Markdown standard.
-- Supporta in modo esplicito titoli, grassetto inline e bullet list semplici.
+- Supporta in modo esplicito titoli, grassetto inline, corsivo inline e bullet list semplici.
 - Gli sfondi devono essere nella root del progetto e chiamarsi `bkgN`.
+- Il background automatico e tematico, ma non genera immagini fotorealistiche o illustrazioni AI.
 
 ## File principale
 
