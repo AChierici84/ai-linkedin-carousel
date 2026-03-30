@@ -16,22 +16,93 @@ from PIL import Image, ImageDraw, ImageStat
 
 THEME_LIBRARY = {
     "ai": {
-        "keywords": {"ai", "llm", "rag", "prompt", "prompting", "embedding", "embeddings", "modello", "modelli", "retrieval", "assistant", "assistente", "chatbot", "multimodale"},
+        "keywords": {
+            "ai", "llm", "rag", "prompt", "prompting", "embedding", "embeddings", "modello", "modelli",
+            "retrieval", "assistant", "assistente", "chatbot", "multimodale", "transformer", "transformers",
+            "attention", "self-attention", "inference", "generative", "generation", "token", "tokens",
+            "fine-tuning", "agent", "agents", "copilot", "automation", "automazione",
+        },
         "palette": ((15, 23, 42), (14, 116, 144), (125, 211, 252)),
         "pattern": "network",
     },
+    "vision": {
+        "keywords": {
+            "vision", "computer", "immagine", "immagini", "image", "images", "patch", "patches", "vit",
+            "cnn", "convolutional", "transformer", "encoder", "attention", "pixel", "pixels", "classification",
+            "detection", "segmentazione", "segmentation", "feature", "features", "visuale", "visione",
+        },
+        "palette": ((8, 47, 73), (14, 116, 144), (186, 230, 253)),
+        "pattern": "network",
+    },
+    "health": {
+        "keywords": {
+            "salute", "health", "healthcare", "medico", "medica", "medici", "medical", "diagnosi",
+            "diagnostic", "ospedale", "ospedali", "clinico", "clinica", "cliniche", "patient", "paziente",
+            "pazienti", "therapy", "terapia", "hospital", "screening", "disease", "malattia", "malattie",
+        },
+        "palette": ((20, 83, 45), (22, 163, 74), (187, 247, 208)),
+        "pattern": "spotlight",
+    },
+    "data": {
+        "keywords": {
+            "data", "dataset", "datasets", "analytics", "analysis", "analisi", "metric", "metrics",
+            "insight", "insights", "benchmark", "benchmarks", "grafico", "grafici", "trend", "trends",
+            "statistica", "statistiche", "measure", "misura", "misure", "report", "reporting",
+        },
+        "palette": ((30, 58, 138), (37, 99, 235), (191, 219, 254)),
+        "pattern": "waves",
+    },
     "growth": {
-        "keywords": {"crescita", "growth", "scala", "scalare", "impatto", "vantaggi", "risultati", "migliora", "performance", "strategia"},
+        "keywords": {
+            "crescita", "growth", "scala", "scalare", "impatto", "vantaggi", "risultati", "migliora",
+            "performance", "strategia", "strategie", "scale", "scaling", "kpi", "efficienza", "efficiency",
+            "conversion", "conversions", "revenue", "traction", "adoption", "adoptione", "roadmap",
+        },
         "palette": ((22, 78, 99), (8, 145, 178), (103, 232, 249)),
         "pattern": "waves",
     },
     "business": {
-        "keywords": {"cliente", "utenti", "business", "mercato", "prodotto", "team", "azienda", "processo", "workflow", "controllo"},
+        "keywords": {
+            "cliente", "clienti", "utenti", "utente", "business", "mercato", "prodotto", "prodotti", "team",
+            "azienda", "aziende", "processo", "processi", "workflow", "controllo", "sales", "vendite",
+            "marketing", "brand", "customer", "customers", "service", "servizio", "servizi", "operations",
+        },
         "palette": ((69, 26, 3), (180, 83, 9), (253, 186, 116)),
         "pattern": "panels",
     },
+    "finance": {
+        "keywords": {
+            "finance", "finanza", "finanziario", "finanziaria", "costo", "costi", "margine", "margini",
+            "investimento", "investimenti", "budget", "roi", "pricing", "price", "prices", "risk", "rischio",
+            "rischi", "portfolio", "cashflow", "profit", "profits",
+        },
+        "palette": ((49, 46, 129), (79, 70, 229), (196, 181, 253)),
+        "pattern": "panels",
+    },
+    "security": {
+        "keywords": {
+            "security", "sicurezza", "privacy", "secure", "compliance", "cybersecurity", "threat", "threats",
+            "attacco", "attacchi", "difesa", "difese", "protection", "protezione", "identity", "access",
+            "authentication", "autenticazione", "authorization", "autorizzazione", "governance",
+        },
+        "palette": ((63, 63, 70), (82, 82, 91), (212, 212, 216)),
+        "pattern": "spotlight",
+    },
+    "education": {
+        "keywords": {
+            "education", "educazione", "training", "formazione", "learning", "learn", "studio", "student",
+            "students", "ricerca", "research", "paper", "papers", "corso", "corsi", "lezione", "lezioni",
+            "insegnamento", "didattica", "academy", "universita", "university",
+        },
+        "palette": ((88, 28, 135), (147, 51, 234), (233, 213, 255)),
+        "pattern": "waves",
+    },
     "manual": {
-        "keywords": {"manuale", "istruzioni", "guida", "pdf", "documento", "documenti", "pagina", "pagine", "qr", "codice"},
+        "keywords": {
+            "manuale", "istruzioni", "guida", "pdf", "documento", "documenti", "pagina", "pagine", "qr",
+            "codice", "tutorial", "how-to", "setup", "installazione", "install", "configurazione", "configuration",
+            "onboarding", "passaggi", "steps",
+        },
         "palette": ((30, 41, 59), (71, 85, 105), (148, 163, 184)),
         "pattern": "panels",
     },
