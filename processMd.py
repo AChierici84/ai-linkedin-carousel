@@ -494,7 +494,7 @@ def _build_styles(title_color, text_color, scale=1.0):
     h1_size = int(42 * scale)
     h2_size = int(34 * scale)
     h3_size = int(28 * scale)
-    body_size = int(20 * scale)
+    body_size = int(24 * scale)
     return {
         "h1": ParagraphStyle("h1", fontName="Helvetica-Bold", fontSize=h1_size, leading=int(h1_size * 1.15), textColor=title_color),
         "h2": ParagraphStyle("h2", fontName="Helvetica-Bold", fontSize=h2_size, leading=int(h2_size * 1.16), textColor=title_color),
@@ -504,19 +504,53 @@ def _build_styles(title_color, text_color, scale=1.0):
     }
 
 
-def _get_slide_layout_profile(slide_text):
-    cleaned = re.sub(r"[\*_#>-]", "", slide_text)
-    characters = len(cleaned)
-    lines = [line.strip() for line in slide_text.splitlines() if line.strip()]
-    non_empty_lines = len(lines)
+def _measure_slide_height(slide, styles, colors, text_width, page_height, gap_body, gap_title, gap_blank):
+    total = 0
+    for raw_line in slide.splitlines():
+        line = raw_line.strip()
+        if not line:
+            total += gap_blank
+        elif line.startswith("### "):
+            p = Paragraph(_markdown_inline_to_html(line[4:].strip(), colors["bold_color"]), styles["h3"])
+            _, h = p.wrap(text_width, page_height)
+            total += h + gap_title
+        elif line.startswith("## "):
+            p = Paragraph(_markdown_inline_to_html(line[3:].strip(), colors["bold_color"]), styles["h2"])
+            _, h = p.wrap(text_width, page_height)
+            total += h + gap_title
+        elif line.startswith("# "):
+            p = Paragraph(_markdown_inline_to_html(line[2:].strip(), colors["bold_color"]), styles["h1"])
+            _, h = p.wrap(text_width, page_height)
+            total += h + gap_title
+        else:
+            is_bullet = line.startswith("- ") or line.startswith("* ")
+            content = line[2:].strip() if is_bullet else line
+            html = _markdown_inline_to_html(content, colors["bold_color"])
+            if is_bullet:
+                html = f"\u2022 {html}"
+            p = Paragraph(html, styles["bullet"] if is_bullet else styles["body"])
+            _, h = p.wrap(text_width, page_height)
+            total += h + gap_body
+    return total
 
-    if characters < 170 or non_empty_lines <= 4:
-        return {"scale": 1.24, "line_gap": 14, "blank_gap": 24, "title_gap": 18}
-    if characters < 300:
-        return {"scale": 1.14, "line_gap": 12, "blank_gap": 20, "title_gap": 16}
-    if characters > 780 or non_empty_lines > 15:
-        return {"scale": 0.96, "line_gap": 8, "blank_gap": 12, "title_gap": 12}
-    return {"scale": 1.04, "line_gap": 10, "blank_gap": 16, "title_gap": 14}
+
+def _find_adaptive_scale(slide, colors, title_color, text_color, text_width, page_height, usable_height):
+    """Binary-search the largest font scale that makes the slide content fit usable_height."""
+    scale_min = 0.55
+    scale_max = 2.2
+    target = usable_height * 0.92          # fill 92% of usable area
+    for _ in range(18):                    # 18 iterations → precision < 0.001
+        scale = (scale_min + scale_max) / 2
+        styles = _build_styles(title_color, text_color, scale)
+        gap_body  = max(4, int(10 * scale))
+        gap_title = max(4, int(12 * scale))
+        gap_blank = max(4, int(14 * scale))
+        h = _measure_slide_height(slide, styles, colors, text_width, page_height, gap_body, gap_title, gap_blank)
+        if h > target:
+            scale_max = scale
+        else:
+            scale_min = scale
+    return scale_min
 
 
 def _get_theme_colors(background_image_path, theme_name=None):
@@ -562,8 +596,8 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
     page_width, page_height = CX
     left_margin = 42
     right_margin = 42
-    content_inset = 18
-    content_top_inset = 18
+    content_inset = 0
+    content_top_inset = 0
     top_margin = 54
     bottom_margin = 54
     text_left = left_margin + content_inset
@@ -571,85 +605,67 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
 
     pdf = canvas.Canvas(output_pdf_path, pagesize=CX)
 
+    usable_height = page_height - top_margin - bottom_margin
+
     for slide_index, slide in enumerate(processed_contents):
         background_image_path = background_path_provider(slide_index, slide)
-        layout_profile = _get_slide_layout_profile(slide)
         theme_name = theme_name_provider(slide_index, slide) if theme_name_provider else None
-        styles = _get_styles_for_background(background_image_path, layout_profile["scale"], theme_name)
         colors = _get_theme_colors(background_image_path, theme_name)
+
+        # Find the largest scale that fits the slide in the usable area
+        scale = _find_adaptive_scale(
+            slide, colors, colors["title_color"], colors["text_color"],
+            text_width, page_height, usable_height,
+        )
+        styles = _build_styles(colors["title_color"], colors["text_color"], scale)
+        gap_body  = max(4, int(10 * scale))
+        gap_title = max(4, int(12 * scale))
+        gap_blank = max(4, int(14 * scale))
+
+        # Start from top of usable area
+        y_start = page_height - top_margin
+
+        # Draw
         _draw_background(pdf, background_image_path, page_width, page_height)
-        y = page_height - top_margin - content_top_inset
+        y = y_start
         for raw_line in slide.splitlines():
             line = raw_line.strip()
 
             if not line:
-                y -= layout_profile["blank_gap"]
+                y -= gap_blank
             elif line.startswith("### "):
                 paragraph = Paragraph(_markdown_inline_to_html(line[4:].strip(), colors["bold_color"]), styles["h3"])
                 y = _draw_paragraph(
-                    pdf,
-                    paragraph,
-                    text_left,
-                    y,
-                    text_width,
-                    bottom_margin,
-                    page_height,
-                    top_margin + content_top_inset,
-                    background_image_path,
-                    page_width,
+                    pdf, paragraph, text_left, y, text_width, bottom_margin,
+                    page_height, top_margin, background_image_path, page_width,
                 )
-                y -= layout_profile["title_gap"]
+                y -= gap_title
             elif line.startswith("## "):
                 paragraph = Paragraph(_markdown_inline_to_html(line[3:].strip(), colors["bold_color"]), styles["h2"])
                 y = _draw_paragraph(
-                    pdf,
-                    paragraph,
-                    text_left,
-                    y,
-                    text_width,
-                    bottom_margin,
-                    page_height,
-                    top_margin + content_top_inset,
-                    background_image_path,
-                    page_width,
+                    pdf, paragraph, text_left, y, text_width, bottom_margin,
+                    page_height, top_margin, background_image_path, page_width,
                 )
-                y -= layout_profile["title_gap"]
+                y -= gap_title
             elif line.startswith("# "):
                 paragraph = Paragraph(_markdown_inline_to_html(line[2:].strip(), colors["bold_color"]), styles["h1"])
                 y = _draw_paragraph(
-                    pdf,
-                    paragraph,
-                    text_left,
-                    y,
-                    text_width,
-                    bottom_margin,
-                    page_height,
-                    top_margin + content_top_inset,
-                    background_image_path,
-                    page_width,
+                    pdf, paragraph, text_left, y, text_width, bottom_margin,
+                    page_height, top_margin, background_image_path, page_width,
                 )
-                y -= layout_profile["title_gap"]
+                y -= gap_title
             else:
                 is_bullet = line.startswith("- ") or line.startswith("* ")
                 content = line[2:].strip() if is_bullet else line
                 html = _markdown_inline_to_html(content, colors["bold_color"])
                 if is_bullet:
-                    html = f"• {html}"
-
+                    html = f"\u2022 {html}"
                 paragraph = Paragraph(html, styles["bullet"] if is_bullet else styles["body"])
                 y = _draw_paragraph(
-                    pdf,
-                    paragraph,
-                    text_left,
-                    y,
-                    text_width,
-                    bottom_margin,
-                    page_height,
-                    top_margin + content_top_inset,
-                    background_image_path,
-                    page_width,
+                    pdf, paragraph, text_left, y, text_width, bottom_margin,
+                    page_height, top_margin, background_image_path, page_width,
                 )
-                y -= layout_profile["line_gap"]
+                y -= gap_body
 
         if slide_index < len(processed_contents) - 1:
             pdf.showPage()
