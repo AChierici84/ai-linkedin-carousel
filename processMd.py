@@ -3,7 +3,6 @@ import re
 from hashlib import md5
 from html import escape
 
-from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import HexColor
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.utils import ImageReader
@@ -12,6 +11,11 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from PIL import Image, ImageDraw, ImageStat
+
+inch = 72.0
+cm = inch / 2.54
+mm = cm * 0.1
+CX=(381*mm,476*mm)
 
 
 THEME_LIBRARY = {
@@ -411,8 +415,8 @@ def _draw_pattern(draw, width, height, pattern_name, accent, seed_bytes):
 def _generate_auto_background(content_text, theme_name):
     theme = THEME_LIBRARY.get(theme_name, THEME_LIBRARY["general"])
     base_color, mid_color, _accent_color = theme["palette"]
-    width = int(A4[0] * 2)
-    height = int(A4[1] * 2)
+    width = int(CX[0] * 2)
+    height = int(CX[1] * 2)
     image = Image.new("RGBA", (width, height), base_color + (255,))
     draw = ImageDraw.Draw(image, "RGBA")
 
@@ -555,7 +559,7 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir, exist_ok=True)
 
-    page_width, page_height = A4
+    page_width, page_height = CX
     left_margin = 42
     right_margin = 42
     content_inset = 18
@@ -565,7 +569,7 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
     text_left = left_margin + content_inset
     text_width = page_width - text_left - right_margin
 
-    pdf = canvas.Canvas(output_pdf_path, pagesize=A4)
+    pdf = canvas.Canvas(output_pdf_path, pagesize=CX)
 
     for slide_index, slide in enumerate(processed_contents):
         background_image_path = background_path_provider(slide_index, slide)
