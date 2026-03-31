@@ -1,12 +1,12 @@
 import os
 import re
 from hashlib import md5
-from glob import glob
 from html import escape
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import HexColor
 from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Paragraph
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw, ImageStat
 
 
 THEME_LIBRARY = {
+    # palette from image: #000000 / #226089 / #4592AE / #E3C4A8
     "ai": {
         "keywords": {
             "ai", "llm", "rag", "prompt", "prompting", "embedding", "embeddings", "modello", "modelli",
@@ -22,94 +23,137 @@ THEME_LIBRARY = {
             "attention", "self-attention", "inference", "generative", "generation", "token", "tokens",
             "fine-tuning", "agent", "agents", "copilot", "automation", "automazione",
         },
-        "palette": ((15, 23, 42), (14, 116, 144), (125, 211, 252)),
-        "pattern": "network",
+        "palette": ((0, 0, 0), (34, 96, 137), (69, 146, 174)),
+        "pattern": "spotlight",
+        "title_color": "#4592AE",
+        "text_color": "#E3C4A8",
+        "bold_color": "#00FFF1",
     },
+    # palette from image: #3D6DB9 / #01D1FF / #00FFF1 / #FAFBF6
     "vision": {
         "keywords": {
             "vision", "computer", "immagine", "immagini", "image", "images", "patch", "patches", "vit",
             "cnn", "convolutional", "transformer", "encoder", "attention", "pixel", "pixels", "classification",
             "detection", "segmentazione", "segmentation", "feature", "features", "visuale", "visione",
         },
-        "palette": ((8, 47, 73), (14, 116, 144), (186, 230, 253)),
-        "pattern": "network",
+        "palette": ((61, 109, 185), (1, 209, 255), (0, 255, 241)),
+        "pattern": "spotlight",
+        "title_color": "#00FFF1",
+        "text_color": "#FAFBF6",
+        "bold_color": "#01D1FF",
     },
+    # palette from image: #1E6261 / #2D767F / #B4F2F1 / #ECFFFB
     "health": {
         "keywords": {
             "salute", "health", "healthcare", "medico", "medica", "medici", "medical", "diagnosi",
             "diagnostic", "ospedale", "ospedali", "clinico", "clinica", "cliniche", "patient", "paziente",
             "pazienti", "therapy", "terapia", "hospital", "screening", "disease", "malattia", "malattie",
         },
-        "palette": ((20, 83, 45), (22, 163, 74), (187, 247, 208)),
+        "palette": ((30, 98, 97), (45, 118, 127), (180, 242, 241)),
         "pattern": "spotlight",
+        "title_color": "#B4F2F1",
+        "text_color": "#ECFFFB",
+        "bold_color": "#2D767F",
     },
+    # palette from image: #446592 / #4A89AC / #ACE5F6 / #E3FCF9
     "data": {
         "keywords": {
             "data", "dataset", "datasets", "analytics", "analysis", "analisi", "metric", "metrics",
             "insight", "insights", "benchmark", "benchmarks", "grafico", "grafici", "trend", "trends",
             "statistica", "statistiche", "measure", "misura", "misure", "report", "reporting",
         },
-        "palette": ((30, 58, 138), (37, 99, 235), (191, 219, 254)),
+        "palette": ((68, 101, 146), (74, 137, 172), (172, 229, 246)),
         "pattern": "waves",
+        "title_color": "#ACE5F6",
+        "text_color": "#E3FCF9",
+        "bold_color": "#F8F8F8",
     },
+    # palette from image: #FFD451 / #EF7B3E / #EA5455 / #2C4059
     "growth": {
         "keywords": {
             "crescita", "growth", "scala", "scalare", "impatto", "vantaggi", "risultati", "migliora",
             "performance", "strategia", "strategie", "scale", "scaling", "kpi", "efficienza", "efficiency",
             "conversion", "conversions", "revenue", "traction", "adoption", "adoptione", "roadmap",
         },
-        "palette": ((22, 78, 99), (8, 145, 178), (103, 232, 249)),
+        "palette": ((44, 64, 89), (234, 84, 85), (239, 123, 62)),
         "pattern": "waves",
+        "title_color": "#FFD451",
+        "text_color": "#FAFBF6",
+        "bold_color": "#EF7B3E",
     },
+    # palette from image: #FF5959 / #FAD05A / #49BEB6 / #075F63
     "business": {
         "keywords": {
             "cliente", "clienti", "utenti", "utente", "business", "mercato", "prodotto", "prodotti", "team",
             "azienda", "aziende", "processo", "processi", "workflow", "controllo", "sales", "vendite",
             "marketing", "brand", "customer", "customers", "service", "servizio", "servizi", "operations",
         },
-        "palette": ((69, 26, 3), (180, 83, 9), (253, 186, 116)),
+        "palette": ((7, 95, 99), (73, 190, 182), (255, 89, 89)),
         "pattern": "panels",
+        "title_color": "#FAD05A",
+        "text_color": "#FAFBF6",
+        "bold_color": "#FF5959",
     },
+    # palette from image: #6C5FA7 / #6B3779 / #B24968 / #FA8573
     "finance": {
         "keywords": {
             "finance", "finanza", "finanziario", "finanziaria", "costo", "costi", "margine", "margini",
             "investimento", "investimenti", "budget", "roi", "pricing", "price", "prices", "risk", "rischio",
             "rischi", "portfolio", "cashflow", "profit", "profits",
         },
-        "palette": ((49, 46, 129), (79, 70, 229), (196, 181, 253)),
+        "palette": ((107, 55, 121), (108, 95, 167), (178, 73, 104)),
         "pattern": "panels",
+        "title_color": "#FA8573",
+        "text_color": "#FAFBF6",
+        "bold_color": "#FFD451",
     },
+    # palette from image: #34222E / #E2424A / #F9B8B8 / #FEE9D6
     "security": {
         "keywords": {
             "security", "sicurezza", "privacy", "secure", "compliance", "cybersecurity", "threat", "threats",
             "attacco", "attacchi", "difesa", "difese", "protection", "protezione", "identity", "access",
             "authentication", "autenticazione", "authorization", "autorizzazione", "governance",
         },
-        "palette": ((63, 63, 70), (82, 82, 91), (212, 212, 216)),
+        "palette": ((52, 34, 46), (226, 66, 74), (249, 184, 184)),
         "pattern": "spotlight",
+        "title_color": "#F9B8B8",
+        "text_color": "#FEE9D6",
+        "bold_color": "#FAD05A",
     },
+    # palette from image: #A66CC1 / #A7ACEC / #ACE7EF / #CEFFF0
     "education": {
         "keywords": {
             "education", "educazione", "training", "formazione", "learning", "learn", "studio", "student",
             "students", "ricerca", "research", "paper", "papers", "corso", "corsi", "lezione", "lezioni",
             "insegnamento", "didattica", "academy", "universita", "university",
         },
-        "palette": ((88, 28, 135), (147, 51, 234), (233, 213, 255)),
+        "palette": ((166, 108, 193), (167, 172, 236), (172, 231, 239)),
         "pattern": "waves",
+        "title_color": "#CEFFF0",
+        "text_color": "#FAFBF6",
+        "bold_color": "#ACE7EF",
     },
+    # palette from image: #F3E8D2 / #88D398 / #1A946F / #114B5F
     "manual": {
         "keywords": {
             "manuale", "istruzioni", "guida", "pdf", "documento", "documenti", "pagina", "pagine", "qr",
             "codice", "tutorial", "how-to", "setup", "installazione", "install", "configurazione", "configuration",
             "onboarding", "passaggi", "steps",
         },
-        "palette": ((30, 41, 59), (71, 85, 105), (148, 163, 184)),
+        "palette": ((17, 75, 95), (26, 148, 111), (136, 211, 152)),
         "pattern": "panels",
+        "title_color": "#88D398",
+        "text_color": "#F3E8D2",
+        "bold_color": "#CEFFF0",
     },
+    # palette from image: #060608 / #2370A1 / #A495C6 / #FAD3CE
     "general": {
         "keywords": set(),
-        "palette": ((49, 46, 129), (37, 99, 235), (147, 197, 253)),
+        "palette": ((6, 6, 8), (35, 112, 161), (164, 149, 198)),
         "pattern": "spotlight",
+        "title_color": "#A495C6",
+        "text_color": "#FAD3CE",
+        "bold_color": "#2370A1",
     },
 }
 
@@ -147,10 +191,18 @@ def _apply_icon_font_spans(text):
     return text
 
 
-def _markdown_inline_to_html(text):
+def _markdown_inline_to_html(text, bold_color=None):
     escaped = escape(text.replace("\ufe0f", ""))
-    # Convert markdown bold (**text**) to reportlab paragraph bold tags.
-    html = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", escaped)
+    # Links: [text](url)  — brackets/parens survive html.escape()
+    html = re.sub(r"\[(.+?)\]\((.+?)\)", r'<a href="\2">\1</a>', escaped)
+    # Underline: __text__  (must run before single-underscore italic)
+    html = re.sub(r"(?<!\w)__(.+?)__(?!\w)", r"<u>\1</u>", html)
+    # Bold: **text**
+    if bold_color:
+        html = re.sub(r"\*\*(.+?)\*\*", rf'<b><font color="{bold_color}">\1</font></b>', html)
+    else:
+        html = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html)
+    # Italic: *text* and _text_
     html = re.sub(r"(?<!\*)\*(?!\*)([^*]+?)(?<!\*)\*(?!\*)", r"<i>\1</i>", html)
     html = re.sub(r"(?<!\w)_(?!_)(.+?)(?<!_)_(?!\w)", r"<i>\1</i>", html)
     return _apply_icon_font_spans(html)
@@ -158,6 +210,90 @@ def _markdown_inline_to_html(text):
 
 def _mix_colors(color_a, color_b, ratio):
     return tuple(int(channel_a + (channel_b - channel_a) * ratio) for channel_a, channel_b in zip(color_a, color_b))
+
+
+def _hex_to_rgb(color_hex):
+    clean = color_hex.lstrip("#")
+    if len(clean) != 6:
+        raise ValueError(f"Invalid HEX color: {color_hex}")
+    return tuple(int(clean[index:index + 2], 16) for index in (0, 2, 4))
+
+
+def _rgb_to_hex(rgb):
+    return f"#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+
+
+def _relative_luminance(rgb):
+    def _channel_to_linear(channel):
+        value = channel / 255.0
+        return value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+
+    red, green, blue = (_channel_to_linear(channel) for channel in rgb)
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def _contrast_ratio(rgb_a, rgb_b):
+    luminance_a = _relative_luminance(rgb_a)
+    luminance_b = _relative_luminance(rgb_b)
+    lighter = max(luminance_a, luminance_b)
+    darker = min(luminance_a, luminance_b)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _get_background_reference_rgb(background_image_path):
+    if isinstance(background_image_path, Image.Image):
+        rgb_image = background_image_path.convert("RGB")
+        stat = ImageStat.Stat(rgb_image)
+        return tuple(int(channel) for channel in stat.mean)
+
+    with Image.open(background_image_path) as image:
+        rgb_image = image.convert("RGB")
+        stat = ImageStat.Stat(rgb_image)
+        return tuple(int(channel) for channel in stat.mean)
+
+
+def _pick_readable_hex(preferred_hex, background_rgb, min_ratio):
+    preferred_rgb = _hex_to_rgb(preferred_hex)
+    if _contrast_ratio(preferred_rgb, background_rgb) >= min_ratio:
+        return preferred_hex
+
+    light_candidate = "#FFFFFF"
+    dark_candidate = "#111111"
+    light_ratio = _contrast_ratio(_hex_to_rgb(light_candidate), background_rgb)
+    dark_ratio = _contrast_ratio(_hex_to_rgb(dark_candidate), background_rgb)
+    return light_candidate if light_ratio >= dark_ratio else dark_candidate
+
+
+def _ensure_text_vs_bold_separation(text_hex, bold_hex, background_rgb):
+    text_rgb = _hex_to_rgb(text_hex)
+    bold_rgb = _hex_to_rgb(bold_hex)
+    if _contrast_ratio(text_rgb, bold_rgb) >= 1.2:
+        return text_hex, bold_hex
+
+    candidates = ["#C7D2FE", "#BFDBFE", "#CBD5E1", "#D1D5DB", "#1F2937", "#374151"]
+    best_text = text_hex
+    best_score = -1.0
+    for candidate in candidates:
+        candidate_rgb = _hex_to_rgb(candidate)
+        contrast_to_bg = _contrast_ratio(candidate_rgb, background_rgb)
+        contrast_to_bold = _contrast_ratio(candidate_rgb, bold_rgb)
+        if contrast_to_bg >= 4.5 and contrast_to_bold >= 1.2:
+            score = contrast_to_bg + contrast_to_bold
+            if score > best_score:
+                best_score = score
+                best_text = candidate
+
+    if best_score >= 0:
+        return best_text, bold_hex
+
+    # Last resort: push bold to white or black (whichever is more readable), then set text to the other.
+    white = "#FFFFFF"
+    black = "#111111"
+    white_ratio = _contrast_ratio(_hex_to_rgb(white), background_rgb)
+    black_ratio = _contrast_ratio(_hex_to_rgb(black), background_rgb)
+    best_bold = white if white_ratio >= black_ratio else black
+    best_text = black if best_bold == white else white
+    return best_text, best_bold
 
 
 def _extract_theme(slide_text):
@@ -174,6 +310,29 @@ def _extract_theme(slide_text):
     digest = md5(slide_text.encode("utf-8")).digest()[0]
     named_themes = [theme_name for theme_name in THEME_LIBRARY if theme_name != "general"]
     return named_themes[digest % len(named_themes)] if named_themes else "general"
+
+
+def _extract_theme_candidates(content_text, count=3):
+    tokens = re.findall(r"[a-zA-ZÀ-ÿ0-9]+", content_text.lower())
+    scored = []
+    for theme_name, theme in THEME_LIBRARY.items():
+        if theme_name == "general":
+            continue
+        keywords = theme.get("keywords", set())
+        score = sum(1 for token in tokens if token in keywords)
+        scored.append((theme_name, score))
+
+    scored.sort(key=lambda item: (-item[1], item[0]))
+    selected = [theme_name for theme_name, score in scored if score > 0][:count]
+
+    if len(selected) < count:
+        fallback_pool = [theme_name for theme_name, _score in scored if theme_name not in selected]
+        seed_bytes = md5(content_text.encode("utf-8")).digest()
+        offset = seed_bytes[0] % len(fallback_pool) if fallback_pool else 0
+        rotated_pool = fallback_pool[offset:] + fallback_pool[:offset]
+        selected.extend(rotated_pool[: count - len(selected)])
+
+    return selected[:count] if selected else ["general"]
 
 
 def _draw_network_pattern(draw, width, height, accent, seed_bytes):
@@ -221,7 +380,7 @@ def _draw_spotlight_pattern(draw, width, height, accent, seed_bytes):
 
 def _draw_pattern(draw, width, height, pattern_name, accent, seed_bytes):
     if pattern_name == "network":
-        _draw_network_pattern(draw, width, height, accent, seed_bytes)
+        _draw_spotlight_pattern(draw, width, height, accent, seed_bytes)
     elif pattern_name == "panels":
         _draw_panel_pattern(draw, width, height, accent, seed_bytes)
     elif pattern_name == "waves":
@@ -230,10 +389,9 @@ def _draw_pattern(draw, width, height, pattern_name, accent, seed_bytes):
         _draw_spotlight_pattern(draw, width, height, accent, seed_bytes)
 
 
-def _generate_auto_background(content_text, output_path):
-    theme_name = _extract_theme(content_text)
+def _generate_auto_background(content_text, theme_name):
     theme = THEME_LIBRARY.get(theme_name, THEME_LIBRARY["general"])
-    base_color, mid_color, accent_color = theme["palette"]
+    base_color, mid_color, _accent_color = theme["palette"]
     width = int(A4[0] * 2)
     height = int(A4[1] * 2)
     image = Image.new("RGBA", (width, height), base_color + (255,))
@@ -244,25 +402,21 @@ def _generate_auto_background(content_text, output_path):
         row_color = _mix_colors(base_color, mid_color, ratio)
         draw.line((0, y, width, y), fill=row_color + (255,))
 
-    seed_bytes = md5(content_text.encode("utf-8")).digest()
-    accent_variant = _mix_colors(accent_color, (255, 255, 255), 0.15)
-    _draw_pattern(draw, width, height, theme["pattern"], accent_variant, seed_bytes)
-
-    halo_radius = int(width * 0.24)
-    halo_x = int(width * (0.72 + (seed_bytes[10] / 255) * 0.12))
-    halo_y = int(height * (0.68 + (seed_bytes[11] / 255) * 0.12))
-    draw.ellipse(
-        (halo_x - halo_radius, halo_y - halo_radius, halo_x + halo_radius, halo_y + halo_radius),
-        fill=accent_color + (36,),
-    )
-
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    image.convert("RGB").save(output_path, format="PNG")
-    return output_path
+    return image.convert("RGB"), theme_name
 
 
 def _draw_background(pdf, background_image_path, page_width, page_height):
-    if os.path.isfile(background_image_path):
+    if isinstance(background_image_path, Image.Image):
+        pdf.drawImage(
+            ImageReader(background_image_path),
+            0,
+            0,
+            width=page_width,
+            height=page_height,
+            preserveAspectRatio=False,
+            mask="auto",
+        )
+    elif os.path.isfile(background_image_path):
         pdf.drawImage(
             background_image_path,
             0,
@@ -274,19 +428,14 @@ def _draw_background(pdf, background_image_path, page_width, page_height):
         )
 
 
-def _get_background_variants(project_root):
-    pattern = os.path.join(project_root, "bkg*.*")
-    background_paths = []
-    for path in sorted(glob(pattern)):
-        base_name = os.path.splitext(os.path.basename(path))[0]
-        match = re.fullmatch(r"bkg(\d+)", base_name)
-        if match:
-            background_paths.append((match.group(1), path))
-
-    return background_paths
-
-
 def _is_dark_background(background_image_path):
+    if isinstance(background_image_path, Image.Image):
+        rgb_image = background_image_path.convert("RGB")
+        stat = ImageStat.Stat(rgb_image)
+        red, green, blue = stat.mean
+        brightness = 0.299 * red + 0.587 * green + 0.114 * blue
+        return brightness < 145
+
     with Image.open(background_image_path) as image:
         rgb_image = image.convert("RGB")
         stat = ImageStat.Stat(rgb_image)
@@ -318,24 +467,70 @@ def _draw_paragraph(
     return y - height
 
 
-def _build_styles(title_color, text_color):
+def _build_styles(title_color, text_color, scale=1.0):
+    h1_size = int(42 * scale)
+    h2_size = int(34 * scale)
+    h3_size = int(28 * scale)
+    body_size = int(20 * scale)
     return {
-        "h1": ParagraphStyle("h1", fontName="Helvetica-Bold", fontSize=42, leading=48, textColor=title_color),
-        "h2": ParagraphStyle("h2", fontName="Helvetica-Bold", fontSize=34, leading=40, textColor=title_color),
-        "h3": ParagraphStyle("h3", fontName="Helvetica-Bold", fontSize=28, leading=34, textColor=title_color),
-        "body": ParagraphStyle("body", fontName="Helvetica", fontSize=20, leading=28, textColor=text_color),
-        "bullet": ParagraphStyle("bullet", fontName="Helvetica", fontSize=20, leading=28, textColor=text_color),
+        "h1": ParagraphStyle("h1", fontName="Helvetica-Bold", fontSize=h1_size, leading=int(h1_size * 1.15), textColor=title_color),
+        "h2": ParagraphStyle("h2", fontName="Helvetica-Bold", fontSize=h2_size, leading=int(h2_size * 1.16), textColor=title_color),
+        "h3": ParagraphStyle("h3", fontName="Helvetica-Bold", fontSize=h3_size, leading=int(h3_size * 1.18), textColor=title_color),
+        "body": ParagraphStyle("body", fontName="Helvetica", fontSize=body_size, leading=int(body_size * 1.4), textColor=text_color),
+        "bullet": ParagraphStyle("bullet", fontName="Helvetica", fontSize=body_size, leading=int(body_size * 1.4), textColor=text_color),
     }
 
 
-def _get_styles_for_background(background_image_path):
+def _get_slide_layout_profile(slide_text):
+    cleaned = re.sub(r"[\*_#>-]", "", slide_text)
+    characters = len(cleaned)
+    lines = [line.strip() for line in slide_text.splitlines() if line.strip()]
+    non_empty_lines = len(lines)
+
+    if characters < 170 or non_empty_lines <= 4:
+        return {"scale": 1.24, "line_gap": 14, "blank_gap": 24, "title_gap": 18}
+    if characters < 300:
+        return {"scale": 1.14, "line_gap": 12, "blank_gap": 20, "title_gap": 16}
+    if characters > 780 or non_empty_lines > 15:
+        return {"scale": 0.96, "line_gap": 8, "blank_gap": 12, "title_gap": 12}
+    return {"scale": 1.04, "line_gap": 10, "blank_gap": 16, "title_gap": 14}
+
+
+def _get_theme_colors(background_image_path, theme_name=None):
     is_dark_background = _is_dark_background(background_image_path)
-    title_color = HexColor("#7DD3FC") if is_dark_background else HexColor("#1D4ED8")
-    text_color = HexColor("#FFFFFF") if is_dark_background else HexColor("#111111")
-    return _build_styles(title_color, text_color)
+    background_rgb = _get_background_reference_rgb(background_image_path)
+    theme = THEME_LIBRARY.get(theme_name, {}) if theme_name else {}
+    title_color_hex = theme.get("title_color")
+    text_color_hex = theme.get("text_color")
+    bold_color_hex = theme.get("bold_color")
+
+    if title_color_hex is None:
+        title_color_hex = "#7DD3FC" if is_dark_background else "#1D4ED8"
+    if text_color_hex is None:
+        text_color_hex = "#FFFFFF" if is_dark_background else "#111111"
+    if bold_color_hex is None:
+        bold_color_hex = "#FFFFFF" if is_dark_background else "#1E3A8A"
+
+    title_color_hex = _pick_readable_hex(title_color_hex, background_rgb, min_ratio=3.0)
+    text_color_hex = _pick_readable_hex(text_color_hex, background_rgb, min_ratio=4.5)
+    bold_color_hex = _pick_readable_hex(bold_color_hex, background_rgb, min_ratio=4.5)
+    text_color_hex, bold_color_hex = _ensure_text_vs_bold_separation(text_color_hex, bold_color_hex, background_rgb)
+
+    title_color = HexColor(title_color_hex)
+    text_color = HexColor(text_color_hex)
+    return {
+        "title_color": title_color,
+        "text_color": text_color,
+        "bold_color": bold_color_hex,
+    }
 
 
-def _generate_pdf(processed_contents, output_pdf_path, background_path_provider):
+def _get_styles_for_background(background_image_path, scale=1.0, theme_name=None):
+    colors = _get_theme_colors(background_image_path, theme_name)
+    return _build_styles(colors["title_color"], colors["text_color"], scale)
+
+
+def _generate_pdf(processed_contents, output_pdf_path, background_path_provider, theme_name_provider=None):
     project_root = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(project_root, "output")
     if not os.path.isdir(output_dir):
@@ -355,16 +550,19 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider)
 
     for slide_index, slide in enumerate(processed_contents):
         background_image_path = background_path_provider(slide_index, slide)
-        styles = _get_styles_for_background(background_image_path)
+        layout_profile = _get_slide_layout_profile(slide)
+        theme_name = theme_name_provider(slide_index, slide) if theme_name_provider else None
+        styles = _get_styles_for_background(background_image_path, layout_profile["scale"], theme_name)
+        colors = _get_theme_colors(background_image_path, theme_name)
         _draw_background(pdf, background_image_path, page_width, page_height)
         y = page_height - top_margin - content_top_inset
         for raw_line in slide.splitlines():
             line = raw_line.strip()
 
             if not line:
-                y -= 16
+                y -= layout_profile["blank_gap"]
             elif line.startswith("### "):
-                paragraph = Paragraph(_markdown_inline_to_html(line[4:].strip()), styles["h3"])
+                paragraph = Paragraph(_markdown_inline_to_html(line[4:].strip(), colors["bold_color"]), styles["h3"])
                 y = _draw_paragraph(
                     pdf,
                     paragraph,
@@ -373,13 +571,13 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider)
                     text_width,
                     bottom_margin,
                     page_height,
-                    top_margin,
+                    top_margin + content_top_inset,
                     background_image_path,
                     page_width,
                 )
-                y -= 12
+                y -= layout_profile["title_gap"]
             elif line.startswith("## "):
-                paragraph = Paragraph(_markdown_inline_to_html(line[3:].strip()), styles["h2"])
+                paragraph = Paragraph(_markdown_inline_to_html(line[3:].strip(), colors["bold_color"]), styles["h2"])
                 y = _draw_paragraph(
                     pdf,
                     paragraph,
@@ -388,13 +586,13 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider)
                     text_width,
                     bottom_margin,
                     page_height,
-                    top_margin,
+                    top_margin + content_top_inset,
                     background_image_path,
                     page_width,
                 )
-                y -= 14
+                y -= layout_profile["title_gap"]
             elif line.startswith("# "):
-                paragraph = Paragraph(_markdown_inline_to_html(line[2:].strip()), styles["h1"])
+                paragraph = Paragraph(_markdown_inline_to_html(line[2:].strip(), colors["bold_color"]), styles["h1"])
                 y = _draw_paragraph(
                     pdf,
                     paragraph,
@@ -403,15 +601,15 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider)
                     text_width,
                     bottom_margin,
                     page_height,
-                    top_margin,
+                    top_margin + content_top_inset,
                     background_image_path,
                     page_width,
                 )
-                y -= 16
+                y -= layout_profile["title_gap"]
             else:
                 is_bullet = line.startswith("- ") or line.startswith("* ")
                 content = line[2:].strip() if is_bullet else line
-                html = _markdown_inline_to_html(content)
+                html = _markdown_inline_to_html(content, colors["bold_color"])
                 if is_bullet:
                     html = f"• {html}"
 
@@ -424,11 +622,11 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider)
                     text_width,
                     bottom_margin,
                     page_height,
-                    top_margin,
+                    top_margin + content_top_inset,
                     background_image_path,
                     page_width,
                 )
-                y -= 10
+                y -= layout_profile["line_gap"]
 
         if slide_index < len(processed_contents) - 1:
             pdf.showPage()
@@ -437,46 +635,32 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider)
     return output_pdf_path
 
 
-def _generate_pdf_for_background(processed_contents, input_file_path, background_suffix, background_image_path):
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(project_root, "output")
-    input_name = os.path.splitext(os.path.basename(input_file_path))[0]
-    output_pdf_path = os.path.join(output_dir, f"{input_name}_bkg{background_suffix}.pdf")
-    return _generate_pdf(processed_contents, output_pdf_path, lambda _slide_index, _slide: background_image_path)
-
-
 def _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path):
     project_root = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(project_root, "output")
     input_name = os.path.splitext(os.path.basename(input_file_path))[0]
-    output_pdf_path = os.path.join(output_dir, f"{input_name}_auto.pdf")
-    auto_background_path = os.path.join(output_dir, f"{input_name}_auto_background.png")
     combined_content = "\n".join(processed_contents)
-    _generate_auto_background(combined_content, auto_background_path)
-    return _generate_pdf(
-        processed_contents,
-        output_pdf_path,
-        lambda _slide_index, _slide: auto_background_path,
-    )
+    selected_themes = _extract_theme_candidates(combined_content, count=3)
+
+    output_paths = []
+    for theme_name in selected_themes:
+        output_pdf_path = os.path.join(output_dir, f"{input_name}_auto_{theme_name}.pdf")
+        auto_background_image, resolved_theme_name = _generate_auto_background(combined_content, theme_name)
+        output_paths.append(
+            _generate_pdf(
+                processed_contents,
+                output_pdf_path,
+                lambda _slide_index, _slide, image=auto_background_image: image,
+                lambda _slide_index, _slide, name=resolved_theme_name: name,
+            )
+        )
+
+    return output_paths
 
 
 def generatePdf(processed_contents, input_file_path):
     _register_optional_fonts()
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    background_variants = _get_background_variants(project_root)
-
-    output_pdf_paths = [_generate_pdf_with_auto_backgrounds(processed_contents, input_file_path)]
-    for background_suffix, background_image_path in background_variants:
-        output_pdf_paths.append(
-            _generate_pdf_for_background(
-                processed_contents,
-                input_file_path,
-                background_suffix,
-                background_image_path,
-            )
-        )
-
-    return output_pdf_paths
+    return _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path)
 
 def process_md_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
