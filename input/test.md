@@ -17,12 +17,14 @@ Accetta testo + immagini e produce immagini (anche con editing)
 
 🧠 Come funziona?
 
-Negli ultimi anni siamo passati da modelli “che disegnano” a modelli che **capiscono prima di generare**.
+Negli ultimi anni siamo passati da modelli “che disegnano”
+→ a modelli che **capiscono prima di generare**.
 
 -------------------------------------------------------------
 
 🔹 **Non lavorano direttamente sui pixel**
-Un’immagine viene trasformata in una **rappresentazione latente**: un vettore numerico che cattura significato, oggetti, stile e relazioni.
+Un’immagine viene trasformata in una **rappresentazione latente**: 
+un vettore numerico che cattura significato, oggetti, stile e relazioni.
 
 ----------------------------------------------------------
 

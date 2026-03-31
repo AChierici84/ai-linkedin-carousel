@@ -181,13 +181,32 @@ def _register_optional_fonts():
         if font_name in pdfmetrics.getRegisteredFontNames():
             continue
         if os.path.isfile(font_path):
-            pdfmetrics.registerFont(TTFont(font_name, font_path))
+            try:
+                pdfmetrics.registerFont(TTFont(font_name, font_path))
+            except Exception:
+                pass  # font unreadable — icons using it will be stripped
 
 
 def _apply_icon_font_spans(text):
+    registered = set(pdfmetrics.getRegisteredFontNames())
     for icon, font_name in ICON_FONT_MAP.items():
-        if font_name in pdfmetrics.getRegisteredFontNames():
-            text = text.replace(icon, f'<font name="{font_name}">{icon}</font>')
+        if icon not in text:
+            continue
+        if font_name not in registered:
+            # Font not available — strip to avoid rendering blank glyphs
+            text = text.replace(icon, "")
+            continue
+        
+        cp = ord(icon)
+        if cp > 0xFFFF:
+            # SMP emoji (surrogate pair) — leave as raw unicode without font tag
+            # ReportLab handles SMP better when not wrapped in <font>
+            pass
+        else:
+            # BMP emoji — wrap with font tag using XML entity
+            entity = f"&#x{cp:04X};"
+            text = text.replace(icon, f'<font name="{font_name}">{entity}</font>')
+    
     return text
 
 
