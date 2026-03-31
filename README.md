@@ -23,9 +23,12 @@ Si apre automaticamente il browser su `http://localhost:7860`.
 | 🔗 Link | Link (prompt URL) | `[testo](url)` |
 | ⊟ Nuova slide | Separatore slide | `----` |
 
-- **Anteprima live** del Markdown nella colonna destra
+- **Selettore tema** dalla cartella `palette/`
+- **Colori palette in riga** con ruoli visivi mostrati nella UI
+- **Anteprima live** del Markdown in tab dedicato
+- **Anteprima PDF** in tab dedicato con gradiente, font e colori coerenti con il PDF finale
 - **Salva .md** → salva il file in `input/` e offre il download
-- **Genera PDF** → salva il file e produce 3 PDF tematici in `output/`
+- **Genera PDF** → salva il file e produce un PDF usando la palette selezionata
 
 ---
 
@@ -36,6 +39,7 @@ python processMd.py post.md
 ```
 
 Il comando cerca il file in `input/post.md` e genera i PDF in `output/`.
+Da CLI il motore usa la selezione automatica dei temi; dalla UI puoi invece forzare una palette specifica.
 
 ---
 
@@ -46,30 +50,22 @@ Il comando cerca il file in `input/post.md` e genera i PDF in `output/`.
 - Grassetto `**testo**`, corsivo `*testo*` / `_testo_`, sottolineato `__testo__`
 - Link `[testo](url)` cliccabili nel PDF
 - Bullet list con `- elemento` o `* elemento`
-- **3 PDF tematici** generati per ogni file: i 3 temi più rilevanti vengono selezionati in base alle parole chiave presenti nel testo
-- Sfondi generati in memoria (nessun PNG intermedio salvato su disco)
-- Colori testo con controllo automatico **WCAG** (contrasto minimo 4.5:1 per testo/bold, 3:1 per titoli)
-- Separazione visiva garantita tra colore testo normale e colore grassetto (≥ 1.2:1)
+- Sfondi generati in memoria con gradiente verticale basato sulla palette selezionata
+- Mappatura ruoli colore da palette immagine: più scuro → sfondo, secondo meno scuro → grassetto, terzo meno scuro → titoli, più chiaro → testo
+- **UI**: genera 1 PDF con la palette scelta manualmente
+- **CLI / auto-mode**: genera 3 PDF usando temi keyword-based mappati a palette reali della cartella `palette/`
+- Colori della palette rispettati nel PDF finale senza sostituzione automatica con bianco/nero quando il tema è esplicito
 
 ---
 
-## Temi disponibili
+## Palette e temi automatici
 
-| Tema | Colori base |
-|---|---|
-| `ai` | Nero → blu acciaio → azzurro |
-| `vision` | Blu medio → ciano → acqua |
-| `health` | Verde petrolio scuro → verde acqua |
-| `data` | Blu ardesia → azzurro → cielo |
-| `growth` | Blu notte → rosso corallo → arancio → giallo |
-| `business` | Verde scuro → teal → rosso corallo |
-| `finance` | Viola scuro → lilla → rosa |
-| `security` | Bordeaux scuro → rosso → rosa chiaro |
-| `education` | Viola → lilla → azzurro ghiaccio |
-| `manual` | Blu petrolio → verde salvia → verde menta |
-| `general` | Quasi nero → blu → malva |
-
-Il tema viene scelto automaticamente: per ogni file vengono prodotti 3 PDF con nome `{file}_auto_{tema}.pdf`.
+- La cartella `palette/` contiene immagini palette (`.jpg`, `.jpeg`, `.png`, `.webp`)
+- La UI ti permette di scegliere direttamente una palette dalla cartella
+- Il motore estrae i colori dominanti dall'immagine palette e assegna i ruoli grafici in automatico
+- I temi automatici (`ai`, `vision`, `health`, `data`, `growth`, `business`, `finance`, `security`, `education`, `manual`, `general`) sono mappati a file palette reali
+- In modalità automatica i file generati hanno nome simile a `{file}_auto_<palette>.pdf`
+- In modalità manuale il file generato ha nome simile a `{file}_palette_<palette>.pdf`
 
 ---
 
@@ -100,13 +96,26 @@ Altro contenuto.
 
 ```text
 .
-├── app.py           ← UI Gradio
-├── processMd.py     ← motore PDF
-├── palette.jpg      ← riferimento palette colori
+├── app.py           ← UI Gradio con editor, tema, anteprime e generazione PDF
+├── processMd.py     ← motore PDF e gestione palette/temi
+├── palette/         ← immagini palette selezionabili dalla UI
 ├── input/
 │   └── post.md
 └── output/
-    └── post_auto_<tema>.pdf
+    ├── post_auto_<palette>.pdf
+    └── post_palette_<palette>.pdf
+```
+
+---
+
+## Uso da Python
+
+Se vuoi forzare una palette specifica senza passare dalla UI:
+
+```python
+from processMd import process_md_file
+
+process_md_file("input/post.md", selected_palette="AdobeColor-Offender 2020.jpeg")
 ```
 
 ---
