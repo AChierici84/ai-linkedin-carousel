@@ -16,10 +16,11 @@ inch = 72.0
 cm = inch / 2.54
 mm = cm * 0.1
 CX=(381*mm,476*mm)
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PALETTE_DIR = os.path.join(PROJECT_ROOT, "palette")
 
 
 THEME_LIBRARY = {
-    # palette from image: #000000 / #226089 / #4592AE / #E3C4A8
     "ai": {
         "keywords": {
             "ai", "llm", "rag", "prompt", "prompting", "embedding", "embeddings", "modello", "modelli",
@@ -27,139 +28,303 @@ THEME_LIBRARY = {
             "attention", "self-attention", "inference", "generative", "generation", "token", "tokens",
             "fine-tuning", "agent", "agents", "copilot", "automation", "automazione",
         },
-        "palette": ((0, 0, 0), (34, 96, 137), (69, 146, 174)),
         "pattern": "spotlight",
-        "title_color": "#4592AE",
-        "text_color": "#E3C4A8",
-        "bold_color": "#00FFF1",
+        "palette_name": None,
     },
-    # palette from image: #3D6DB9 / #01D1FF / #00FFF1 / #FAFBF6
     "vision": {
         "keywords": {
             "vision", "computer", "immagine", "immagini", "image", "images", "patch", "patches", "vit",
             "cnn", "convolutional", "transformer", "encoder", "attention", "pixel", "pixels", "classification",
             "detection", "segmentazione", "segmentation", "feature", "features", "visuale", "visione",
         },
-        "palette": ((61, 109, 185), (1, 209, 255), (0, 255, 241)),
         "pattern": "spotlight",
-        "title_color": "#00FFF1",
-        "text_color": "#FAFBF6",
-        "bold_color": "#01D1FF",
+        "palette_name": None,
     },
-    # palette from image: #1E6261 / #2D767F / #B4F2F1 / #ECFFFB
     "health": {
         "keywords": {
             "salute", "health", "healthcare", "medico", "medica", "medici", "medical", "diagnosi",
             "diagnostic", "ospedale", "ospedali", "clinico", "clinica", "cliniche", "patient", "paziente",
             "pazienti", "therapy", "terapia", "hospital", "screening", "disease", "malattia", "malattie",
         },
-        "palette": ((30, 98, 97), (45, 118, 127), (180, 242, 241)),
         "pattern": "spotlight",
-        "title_color": "#B4F2F1",
-        "text_color": "#ECFFFB",
-        "bold_color": "#2D767F",
+        "palette_name": None,
     },
-    # palette from image: #446592 / #4A89AC / #ACE5F6 / #E3FCF9
     "data": {
         "keywords": {
             "data", "dataset", "datasets", "analytics", "analysis", "analisi", "metric", "metrics",
             "insight", "insights", "benchmark", "benchmarks", "grafico", "grafici", "trend", "trends",
             "statistica", "statistiche", "measure", "misura", "misure", "report", "reporting",
         },
-        "palette": ((68, 101, 146), (74, 137, 172), (172, 229, 246)),
         "pattern": "waves",
-        "title_color": "#ACE5F6",
-        "text_color": "#E3FCF9",
-        "bold_color": "#F8F8F8",
+        "palette_name": None,
     },
-    # palette from image: #FFD451 / #EF7B3E / #EA5455 / #2C4059
     "growth": {
         "keywords": {
             "crescita", "growth", "scala", "scalare", "impatto", "vantaggi", "risultati", "migliora",
             "performance", "strategia", "strategie", "scale", "scaling", "kpi", "efficienza", "efficiency",
             "conversion", "conversions", "revenue", "traction", "adoption", "adoptione", "roadmap",
         },
-        "palette": ((44, 64, 89), (234, 84, 85), (239, 123, 62)),
         "pattern": "waves",
-        "title_color": "#FFD451",
-        "text_color": "#FAFBF6",
-        "bold_color": "#EF7B3E",
+        "palette_name": None,
     },
-    # palette from image: #FF5959 / #FAD05A / #49BEB6 / #075F63
     "business": {
         "keywords": {
             "cliente", "clienti", "utenti", "utente", "business", "mercato", "prodotto", "prodotti", "team",
             "azienda", "aziende", "processo", "processi", "workflow", "controllo", "sales", "vendite",
             "marketing", "brand", "customer", "customers", "service", "servizio", "servizi", "operations",
         },
-        "palette": ((7, 95, 99), (73, 190, 182), (255, 89, 89)),
         "pattern": "panels",
-        "title_color": "#FAD05A",
-        "text_color": "#FAFBF6",
-        "bold_color": "#FF5959",
+        "palette_name": None,
     },
-    # palette from image: #6C5FA7 / #6B3779 / #B24968 / #FA8573
     "finance": {
         "keywords": {
             "finance", "finanza", "finanziario", "finanziaria", "costo", "costi", "margine", "margini",
             "investimento", "investimenti", "budget", "roi", "pricing", "price", "prices", "risk", "rischio",
             "rischi", "portfolio", "cashflow", "profit", "profits",
         },
-        "palette": ((107, 55, 121), (108, 95, 167), (178, 73, 104)),
         "pattern": "panels",
-        "title_color": "#FA8573",
-        "text_color": "#FAFBF6",
-        "bold_color": "#FFD451",
+        "palette_name": None,
     },
-    # palette from image: #34222E / #E2424A / #F9B8B8 / #FEE9D6
     "security": {
         "keywords": {
             "security", "sicurezza", "privacy", "secure", "compliance", "cybersecurity", "threat", "threats",
             "attacco", "attacchi", "difesa", "difese", "protection", "protezione", "identity", "access",
             "authentication", "autenticazione", "authorization", "autorizzazione", "governance",
         },
-        "palette": ((52, 34, 46), (226, 66, 74), (249, 184, 184)),
         "pattern": "spotlight",
-        "title_color": "#F9B8B8",
-        "text_color": "#FEE9D6",
-        "bold_color": "#FAD05A",
+        "palette_name": None,
     },
-    # palette from image: #A66CC1 / #A7ACEC / #ACE7EF / #CEFFF0
     "education": {
         "keywords": {
             "education", "educazione", "training", "formazione", "learning", "learn", "studio", "student",
             "students", "ricerca", "research", "paper", "papers", "corso", "corsi", "lezione", "lezioni",
             "insegnamento", "didattica", "academy", "universita", "university",
         },
-        "palette": ((166, 108, 193), (167, 172, 236), (172, 231, 239)),
         "pattern": "waves",
-        "title_color": "#CEFFF0",
-        "text_color": "#FAFBF6",
-        "bold_color": "#ACE7EF",
+        "palette_name": None,
     },
-    # palette from image: #F3E8D2 / #88D398 / #1A946F / #114B5F
     "manual": {
         "keywords": {
             "manuale", "istruzioni", "guida", "pdf", "documento", "documenti", "pagina", "pagine", "qr",
             "codice", "tutorial", "how-to", "setup", "installazione", "install", "configurazione", "configuration",
             "onboarding", "passaggi", "steps",
         },
-        "palette": ((17, 75, 95), (26, 148, 111), (136, 211, 152)),
         "pattern": "panels",
-        "title_color": "#88D398",
-        "text_color": "#F3E8D2",
-        "bold_color": "#CEFFF0",
+        "palette_name": None,
     },
-    # palette from image: #060608 / #2370A1 / #A495C6 / #FAD3CE
     "general": {
         "keywords": set(),
-        "palette": ((6, 6, 8), (35, 112, 161), (164, 149, 198)),
         "pattern": "spotlight",
-        "title_color": "#A495C6",
-        "text_color": "#FAD3CE",
-        "bold_color": "#2370A1",
+        "palette_name": None,
     },
 }
+
+
+THEME_COLOR_TARGETS = {
+    "ai": {"background": "#000000", "bold": "#226089", "title": "#4592AE", "text": "#E3C4A8"},
+    "vision": {"background": "#3D6DB9", "bold": "#01D1FF", "title": "#00FFF1", "text": "#FAFBF6"},
+    "health": {"background": "#1E6261", "bold": "#2D767F", "title": "#B4F2F1", "text": "#ECFFFB"},
+    "data": {"background": "#446592", "bold": "#4A89AC", "title": "#ACE5F6", "text": "#E3FCF9"},
+    "growth": {"background": "#2C4059", "bold": "#EA5455", "title": "#EF7B3E", "text": "#FFD451"},
+    "business": {"background": "#075F63", "bold": "#49BEB6", "title": "#FF5959", "text": "#FAD05A"},
+    "finance": {"background": "#6B3779", "bold": "#6C5FA7", "title": "#B24968", "text": "#FA8573"},
+    "security": {"background": "#34222E", "bold": "#E2424A", "title": "#F9B8B8", "text": "#FEE9D6"},
+    "education": {"background": "#A66CC1", "bold": "#A7ACEC", "title": "#ACE7EF", "text": "#CEFFF0"},
+    "manual": {"background": "#114B5F", "bold": "#1A946F", "title": "#88D398", "text": "#F3E8D2"},
+    "general": {"background": "#060608", "bold": "#2370A1", "title": "#A495C6", "text": "#FAD3CE"},
+}
+
+
+THEME_PALETTE_OVERRIDES = {
+    "ai": "AdobeColor-Offender 2020.jpeg",
+    "vision": "AdobeColor-Apparel 45.jpeg",
+    "health": "AdobeColor-Moda (5).jpeg",
+    "data": "AdobeColor-Miffew _ Lookbook.jpeg",
+    "growth": "AdobeColor-GOSSAMER IN BUD _ L’Officiel Vietnam.jpeg",
+    "business": "AdobeColor-Polina.jpeg",
+    "finance": "AdobeColor-White bead - Beauty editorial.jpeg",
+    "security": "AdobeColor-Campaign.jpeg",
+    "education": "AdobeColor-Moda (3).jpeg",
+    "manual": "AdobeColor-Moda (11).jpeg",
+    "general": "AdobeColor-Moda (2).jpeg",
+}
+
+
+def _hex_to_rgb_safe(color_hex):
+    clean = (color_hex or "").lstrip("#")
+    if len(clean) != 6:
+        return (0, 0, 0)
+    return tuple(int(clean[index:index + 2], 16) for index in (0, 2, 4))
+
+
+def _palette_similarity_score(target_roles, candidate_roles):
+    weights = {
+        "background": 3.0,
+        "text": 2.5,
+        "bold": 2.0,
+        "title": 1.8,
+    }
+    score = 0.0
+    for role, weight in weights.items():
+        target_rgb = _hex_to_rgb_safe(target_roles.get(role))
+        candidate_rgb = _hex_to_rgb_safe(candidate_roles.get(role))
+        distance = sum((a - b) ** 2 for a, b in zip(target_rgb, candidate_rgb)) ** 0.5
+        score += weight * distance
+    return score
+
+
+def list_palette_files():
+    if not os.path.isdir(PALETTE_DIR):
+        return []
+
+    valid_ext = {".jpg", ".jpeg", ".png", ".webp"}
+    files = []
+    for name in os.listdir(PALETTE_DIR):
+        path = os.path.join(PALETTE_DIR, name)
+        if os.path.isfile(path) and os.path.splitext(name.lower())[1] in valid_ext:
+            files.append(name)
+    return sorted(files, key=lambda item: item.lower())
+
+
+def _relative_luminance(rgb):
+    def _channel_to_linear(channel):
+        value = channel / 255.0
+        return value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+
+    red, green, blue = (_channel_to_linear(channel) for channel in rgb)
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def _rgb_to_hex(rgb):
+    return f"#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+
+
+def _resolve_palette_path(palette_name_or_path):
+    if not palette_name_or_path:
+        return None
+    if os.path.isfile(palette_name_or_path):
+        return palette_name_or_path
+
+    candidate = os.path.join(PALETTE_DIR, palette_name_or_path)
+    if os.path.isfile(candidate):
+        return candidate
+    return None
+
+
+def _extract_dominant_palette_colors(palette_name_or_path, max_colors=8):
+    palette_path = _resolve_palette_path(palette_name_or_path)
+    if not palette_path:
+        return []
+
+    with Image.open(palette_path) as image:
+        rgb = image.convert("RGB")
+        rgb.thumbnail((320, 320))
+        quantized = rgb.quantize(colors=max_colors, method=Image.Quantize.MEDIANCUT)
+        palette = quantized.getpalette()
+        color_counts = quantized.getcolors() or []
+
+    extracted = []
+    for count, color_index in color_counts:
+        base = color_index * 3
+        extracted.append((count, tuple(palette[base:base + 3])))
+
+    extracted.sort(key=lambda item: item[0], reverse=True)
+    unique_rgb = []
+    for _, rgb in extracted:
+        if rgb not in unique_rgb:
+            unique_rgb.append(rgb)
+    return unique_rgb
+
+
+def get_palette_roles(palette_name_or_path):
+    dominant_colors = _extract_dominant_palette_colors(palette_name_or_path)
+    if len(dominant_colors) < 4:
+        return {
+            "background": "#060608",
+            "bold": "#2370A1",
+            "title": "#A495C6",
+            "text": "#FAD3CE",
+            "ordered": ["#060608", "#2370A1", "#A495C6", "#FAD3CE"],
+        }
+
+    ordered_by_darkness = sorted(dominant_colors, key=_relative_luminance)
+    darkest = ordered_by_darkness[0]
+    second_darkest = ordered_by_darkness[1]
+    third_darkest = ordered_by_darkness[2]
+    lightest = ordered_by_darkness[-1]
+
+    ordered_hex = [_rgb_to_hex(rgb) for rgb in ordered_by_darkness]
+    return {
+        "background": _rgb_to_hex(darkest),
+        "bold": _rgb_to_hex(second_darkest),
+        "title": _rgb_to_hex(third_darkest),
+        "text": _rgb_to_hex(lightest),
+        "ordered": ordered_hex,
+    }
+
+
+def get_theme_from_palette(palette_name_or_path):
+    roles = get_palette_roles(palette_name_or_path)
+    ordered_hex = roles["ordered"]
+    if len(ordered_hex) < 3:
+        ordered_hex = [roles["background"], roles["bold"], roles["title"]]
+
+    return {
+        "keywords": set(),
+        "palette": tuple(_hex_to_rgb(color_hex) for color_hex in ordered_hex[:3]),
+        "pattern": "spotlight",
+        "title_color": roles["title"],
+        "text_color": roles["text"],
+        "bold_color": roles["bold"],
+    }
+
+
+def _resolve_automatic_theme_palettes():
+    palette_files = list_palette_files()
+    if not palette_files:
+        return
+
+    palette_roles_map = {name: get_palette_roles(name) for name in palette_files}
+    available = set(palette_files)
+
+    # Apply explicit overrides first for stable, brand-consistent output.
+    for theme_name, palette_name in THEME_PALETTE_OVERRIDES.items():
+        if theme_name not in THEME_LIBRARY:
+            continue
+        if palette_name in palette_roles_map:
+            THEME_LIBRARY[theme_name]["palette_name"] = palette_name
+            if palette_name in available:
+                available.remove(palette_name)
+
+    for theme_name in THEME_LIBRARY.keys():
+        if THEME_LIBRARY[theme_name].get("palette_name") in palette_roles_map:
+            continue
+        target_roles = THEME_COLOR_TARGETS.get(theme_name, THEME_COLOR_TARGETS["general"])
+        pool = available if available else set(palette_files)
+        best_name = min(pool, key=lambda candidate: _palette_similarity_score(target_roles, palette_roles_map[candidate]))
+        THEME_LIBRARY[theme_name]["palette_name"] = best_name
+        if best_name in available:
+            available.remove(best_name)
+
+
+def _resolve_theme_definition(theme_name):
+    theme_info = THEME_LIBRARY.get(theme_name, THEME_LIBRARY["general"])
+    palette_name = theme_info.get("palette_name")
+    if palette_name:
+        resolved = get_theme_from_palette(palette_name)
+        resolved["keywords"] = theme_info.get("keywords", set())
+        resolved["pattern"] = theme_info.get("pattern", "spotlight")
+        resolved["palette_name"] = palette_name
+        return resolved
+
+    fallback = get_theme_from_palette("")
+    fallback["keywords"] = theme_info.get("keywords", set())
+    fallback["pattern"] = theme_info.get("pattern", "spotlight")
+    fallback["palette_name"] = None
+    return fallback
+
+
+_resolve_automatic_theme_palettes()
 
 FONT_REGISTRY = {
     "SegoeUISymbol": os.path.join(os.environ.get("WINDIR", "C:\\Windows"), "Fonts", "seguisym.ttf"),
@@ -240,19 +405,6 @@ def _hex_to_rgb(color_hex):
     if len(clean) != 6:
         raise ValueError(f"Invalid HEX color: {color_hex}")
     return tuple(int(clean[index:index + 2], 16) for index in (0, 2, 4))
-
-
-def _rgb_to_hex(rgb):
-    return f"#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
-
-
-def _relative_luminance(rgb):
-    def _channel_to_linear(channel):
-        value = channel / 255.0
-        return value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
-
-    red, green, blue = (_channel_to_linear(channel) for channel in rgb)
-    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
 
 
 def _contrast_ratio(rgb_a, rgb_b):
@@ -412,8 +564,8 @@ def _draw_pattern(draw, width, height, pattern_name, accent, seed_bytes):
         _draw_spotlight_pattern(draw, width, height, accent, seed_bytes)
 
 
-def _generate_auto_background(content_text, theme_name):
-    theme = THEME_LIBRARY.get(theme_name, THEME_LIBRARY["general"])
+def _generate_auto_background(content_text, theme_name, theme_override=None):
+    theme = theme_override if theme_override else _resolve_theme_definition(theme_name)
     base_color, mid_color, _accent_color = theme["palette"]
     width = int(CX[0] * 2)
     height = int(CX[1] * 2)
@@ -553,13 +705,23 @@ def _find_adaptive_scale(slide, colors, title_color, text_color, text_width, pag
     return scale_min
 
 
-def _get_theme_colors(background_image_path, theme_name=None):
+def _get_theme_colors(background_image_path, theme_name=None, theme_override=None):
     is_dark_background = _is_dark_background(background_image_path)
     background_rgb = _get_background_reference_rgb(background_image_path)
-    theme = THEME_LIBRARY.get(theme_name, {}) if theme_name else {}
+    theme = theme_override if theme_override else (_resolve_theme_definition(theme_name) if theme_name else {})
     title_color_hex = theme.get("title_color")
     text_color_hex = theme.get("text_color")
     bold_color_hex = theme.get("bold_color")
+
+    # If a palette already provides explicit role colors, keep them as-is.
+    # This avoids automatic fallback to white/black and respects selected palette intent.
+    has_explicit_palette_roles = bool(title_color_hex and text_color_hex and bold_color_hex)
+    if has_explicit_palette_roles:
+        return {
+            "title_color": HexColor(title_color_hex),
+            "text_color": HexColor(text_color_hex),
+            "bold_color": bold_color_hex,
+        }
 
     if title_color_hex is None:
         title_color_hex = "#7DD3FC" if is_dark_background else "#1D4ED8"
@@ -587,9 +749,8 @@ def _get_styles_for_background(background_image_path, scale=1.0, theme_name=None
     return _build_styles(colors["title_color"], colors["text_color"], scale)
 
 
-def _generate_pdf(processed_contents, output_pdf_path, background_path_provider, theme_name_provider=None):
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(project_root, "output")
+def _generate_pdf(processed_contents, output_pdf_path, background_path_provider, theme_name_provider=None, theme_override_provider=None):
+    output_dir = os.path.join(PROJECT_ROOT, "output")
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir, exist_ok=True)
 
@@ -610,7 +771,8 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
     for slide_index, slide in enumerate(processed_contents):
         background_image_path = background_path_provider(slide_index, slide)
         theme_name = theme_name_provider(slide_index, slide) if theme_name_provider else None
-        colors = _get_theme_colors(background_image_path, theme_name)
+        theme_override = theme_override_provider(slide_index, slide) if theme_override_provider else None
+        colors = _get_theme_colors(background_image_path, theme_name, theme_override)
 
         # Find the largest scale that fits the slide in the usable area
         scale = _find_adaptive_scale(
@@ -675,15 +837,16 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
 
 
 def _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path):
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(project_root, "output")
+    output_dir = os.path.join(PROJECT_ROOT, "output")
     input_name = os.path.splitext(os.path.basename(input_file_path))[0]
     combined_content = "\n".join(processed_contents)
     selected_themes = _extract_theme_candidates(combined_content, count=3)
 
     output_paths = []
     for theme_name in selected_themes:
-        output_pdf_path = os.path.join(output_dir, f"{input_name}_auto_{theme_name}.pdf")
+        theme_info = _resolve_theme_definition(theme_name)
+        theme_label = theme_info.get("palette_name") or theme_name
+        output_pdf_path = os.path.join(output_dir, f"{input_name}_auto_{_slugify(theme_label)}.pdf")
         auto_background_image, resolved_theme_name = _generate_auto_background(combined_content, theme_name)
         output_paths.append(
             _generate_pdf(
@@ -697,11 +860,39 @@ def _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path):
     return output_paths
 
 
-def generatePdf(processed_contents, input_file_path):
+def _slugify(value):
+    safe = re.sub(r"[^a-zA-Z0-9_-]+", "_", value).strip("_")
+    return safe or "palette"
+
+
+def _generate_pdf_with_selected_palette(processed_contents, input_file_path, palette_name_or_path):
+    output_dir = os.path.join(PROJECT_ROOT, "output")
+    input_name = os.path.splitext(os.path.basename(input_file_path))[0]
+    palette_path = _resolve_palette_path(palette_name_or_path)
+    palette_label = os.path.splitext(os.path.basename(palette_path))[0] if palette_path else "custom"
+    output_pdf_path = os.path.join(output_dir, f"{input_name}_palette_{_slugify(palette_label)}.pdf")
+
+    combined_content = "\n".join(processed_contents)
+    custom_theme = get_theme_from_palette(palette_name_or_path)
+    auto_background_image, _ = _generate_auto_background(combined_content, "general", custom_theme)
+
+    generated = _generate_pdf(
+        processed_contents,
+        output_pdf_path,
+        lambda _slide_index, _slide, image=auto_background_image: image,
+        lambda _slide_index, _slide: None,
+        lambda _slide_index, _slide, theme=custom_theme: theme,
+    )
+    return [generated]
+
+
+def generatePdf(processed_contents, input_file_path, selected_palette=None):
     _register_optional_fonts()
+    if selected_palette:
+        return _generate_pdf_with_selected_palette(processed_contents, input_file_path, selected_palette)
     return _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path)
 
-def process_md_file(file_path):
+def process_md_file(file_path, selected_palette=None):
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
@@ -718,7 +909,7 @@ def process_md_file(file_path):
     if processed_content:
         processed_contents.append(processed_content)
     
-    return generatePdf(processed_contents, file_path)
+    return generatePdf(processed_contents, file_path, selected_palette)
 
 
 if __name__ == "__main__":
