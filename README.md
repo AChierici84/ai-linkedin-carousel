@@ -1,67 +1,91 @@
 # AI LinkedIn Carousel
 
-Tool Python per generare un carousel PDF partendo da un file Markdown.
+Tool Python per generare carousel PDF multi-tema partendo da un file Markdown.  
+Disponibile sia come **interfaccia grafica** (Gradio) che come **CLI**.
 
-Ogni sezione del Markdown viene trasformata in una pagina del PDF. Per ogni immagine di sfondo presente nella root del progetto con nome `bkgN` viene generata una variante separata del PDF, salvata nella cartella `output`.
+---
 
-## Funzionalita
-
-- Converte un file Markdown in un carousel PDF multipagina.
-- Interpreta titoli Markdown `#`, `##`, `###`.
-- Interpreta il grassetto inline con `**testo**`.
-- Interpreta il corsivo inline con `*testo*` e `_testo_`.
-- Interpreta liste con `* elemento` oppure `- elemento`.
-- Genera una variante automatica con un unico background correlato al contenuto del carousel.
-- Usa automaticamente ogni sfondo `bkg1.png`, `bkg2.png`, `bkg3.png`, ecc.
-- Genera un PDF separato per ogni sfondo con suffisso `_bkgN`.
-- Salva anche lo sfondo generato automaticamente in `output/<nomefile>_auto_background.png`.
-- Se lo sfondo e scuro usa testo chiaro.
-- I titoli usano blu su sfondi chiari e azzurro su sfondi scuri.
-
-## Struttura del progetto
-
-```text
-.
-|-- input/
-|   `-- post.md
-|-- output/
-|-- bkg1.png
-|-- bkg2.png
-|-- bkg3.png
-`-- processMd.py
-```
-
-## Requisiti
-
-- Python 3.10+
-- `reportlab`
-- `Pillow`
-
-Installazione dipendenze:
+## Avvio rapido — UI grafica
 
 ```bash
-pip install reportlab pillow
+python app.py
 ```
+
+Si apre automaticamente il browser su `http://localhost:7860`.
+
+### Funzionalità dell'editor
+
+| Pulsante | Effetto | Sintassi inserita |
+|---|---|---|
+| **B** | Grassetto | `**testo**` |
+| *I* | Corsivo | `*testo*` |
+| U | Sottolineato | `__testo__` |
+| 🔗 Link | Link (prompt URL) | `[testo](url)` |
+| ⊟ Nuova slide | Separatore slide | `----` |
+
+- **Anteprima live** del Markdown nella colonna destra
+- **Salva .md** → salva il file in `input/` e offre il download
+- **Genera PDF** → salva il file e produce 3 PDF tematici in `output/`
+
+---
+
+## Avvio rapido — CLI
+
+```bash
+python processMd.py post.md
+```
+
+Il comando cerca il file in `input/post.md` e genera i PDF in `output/`.
+
+---
+
+## Funzionalità del motore PDF
+
+- Converte Markdown in carousel PDF multipagina (formato A4)
+- Titoli `#`, `##`, `###` con dimensione scalata automaticamente al contenuto della slide
+- Grassetto `**testo**`, corsivo `*testo*` / `_testo_`, sottolineato `__testo__`
+- Link `[testo](url)` cliccabili nel PDF
+- Bullet list con `- elemento` o `* elemento`
+- **3 PDF tematici** generati per ogni file: i 3 temi più rilevanti vengono selezionati in base alle parole chiave presenti nel testo
+- Sfondi generati in memoria (nessun PNG intermedio salvato su disco)
+- Colori testo con controllo automatico **WCAG** (contrasto minimo 4.5:1 per testo/bold, 3:1 per titoli)
+- Separazione visiva garantita tra colore testo normale e colore grassetto (≥ 1.2:1)
+
+---
+
+## Temi disponibili
+
+| Tema | Colori base |
+|---|---|
+| `ai` | Nero → blu acciaio → azzurro |
+| `vision` | Blu medio → ciano → acqua |
+| `health` | Verde petrolio scuro → verde acqua |
+| `data` | Blu ardesia → azzurro → cielo |
+| `growth` | Blu notte → rosso corallo → arancio → giallo |
+| `business` | Verde scuro → teal → rosso corallo |
+| `finance` | Viola scuro → lilla → rosa |
+| `security` | Bordeaux scuro → rosso → rosa chiaro |
+| `education` | Viola → lilla → azzurro ghiaccio |
+| `manual` | Blu petrolio → verde salvia → verde menta |
+| `general` | Quasi nero → blu → malva |
+
+Il tema viene scelto automaticamente: per ogni file vengono prodotti 3 PDF con nome `{file}_auto_{tema}.pdf`.
+
+---
 
 ## Formato del Markdown
 
-Il file Markdown deve stare dentro la cartella `input/`.
-
-Le slide vengono separate con una riga che inizia con:
-
-```text
-----
-```
-
-Esempio:
+Le slide vengono separate con `----`:
 
 ```md
 # Titolo slide 1
 
-Questo e un testo con **grassetto**.
+Testo con **grassetto**, *corsivo*, __sottolineato__.
 
-* Primo punto
-* Secondo punto
+Visita [il mio sito](https://example.com).
+
+- Primo punto
+- Secondo punto
 
 ----
 
@@ -70,52 +94,30 @@ Questo e un testo con **grassetto**.
 Altro contenuto.
 ```
 
-## Esecuzione
+---
 
-Da root progetto:
+## Struttura del progetto
 
-```bash
-python processMd.py post.md
+```text
+.
+├── app.py           ← UI Gradio
+├── processMd.py     ← motore PDF
+├── palette.jpg      ← riferimento palette colori
+├── input/
+│   └── post.md
+└── output/
+    └── post_auto_<tema>.pdf
 ```
 
-Il comando cerca automaticamente il file in `input/post.md`.
+---
 
-Inoltre genera sempre una variante `*_auto.pdf` con uno sfondo creato a partire dal testo complessivo del carousel.
+## Requisiti
 
-## Output
+- Python 3.10+
+- `reportlab`
+- `Pillow`
+- `gradio`
 
-Se nella root sono presenti ad esempio:
-
-- `bkg1.png`
-- `bkg2.png`
-- `bkg3.png`
-
-e il file di input e `post.md`, i file generati saranno:
-
-- `output/post_auto.pdf`
-- `output/post_bkg1.pdf`
-- `output/post_bkg2.pdf`
-- `output/post_bkg3.pdf`
-
-L'asset PNG usato per la variante automatica viene salvato in:
-
-- `output/post_auto_background.png`
-
-## Regole di stile applicate
-
-- Titoli grandi per migliorare la leggibilita nel formato carousel.
-- Corpo del testo e bullet con dimensione aumentata.
-- Sfondo applicato a tutta la pagina.
-- Colore del testo adattato automaticamente alla luminosita media dello sfondo.
-- La variante automatica sceglie palette e pattern in base a parole chiave del contenuto, evitando pattern a griglia.
-
-## Limiti attuali
-
-- Non interpreta tutto il Markdown standard.
-- Supporta in modo esplicito titoli, grassetto inline, corsivo inline e bullet list semplici.
-- Gli sfondi devono essere nella root del progetto e chiamarsi `bkgN`.
-- Il background automatico e tematico, ma non genera immagini fotorealistiche o illustrazioni AI.
-
-## File principale
-
-La logica principale si trova in [processMd.py](processMd.py).
+```bash
+pip install reportlab pillow gradio
+```
