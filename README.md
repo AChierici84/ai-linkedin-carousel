@@ -29,6 +29,10 @@ Si apre automaticamente il browser su `http://localhost:7860`.
 - **Anteprima PDF** in tab dedicato con gradiente, font e colori coerenti con il PDF finale
 - **Salva .md** → salva il file in `input/` e offre il download
 - **Genera PDF** → salva il file e produce un PDF usando la palette selezionata
+- **Sezione 🤖 Ottimizzazione LLM (GPT-4o)** con due pulsanti:
+  - **✨ Ottimizza per LinkedIn** → invia il contenuto dell'editor a GPT-4o per migliorare tono, titoli e bullet point mantenendo la struttura delle slide invariata
+  - **🧩 Suddividi in slide** → invia un testo unico a GPT-4o che lo suddivide in slide separate da `----`, pronte per il carousel
+- La **API Key OpenAI** si può inserire nel campo dedicato oppure viene letta automaticamente da `.env` (variabile `OPENAI_API_KEY`)
 
 ---
 
@@ -92,13 +96,38 @@ Altro contenuto.
 
 ---
 
+## Ottimizzazione LLM
+
+La sezione **🤖 Ottimizzazione LLM (GPT-4o)** nell'interfaccia grafica offre due funzioni AI:
+
+### ✨ Ottimizza per LinkedIn
+Prende il carosello già strutturato in slide e lo riscrive per massimizzare l'engagement su LinkedIn: titoli più incisivi, tono più diretto, bullet point concrete. La struttura (numero di slide, separatori `----`, gerarchia heading) viene preservata.
+
+### 🧩 Suddividi in slide
+Prende un testo non ancora diviso (es. un articolo, un post o un testo scritto liberamente) e lo suddivide automaticamente in 6–10 slide con titoli e contenuti bilanciati, usando i separatori `----`.
+
+### Configurazione credenziali
+
+Crea un file `.env` nella root del progetto:
+
+```
+OPENAI_API_KEY=sk-...
+```
+
+L'app carica automaticamente il file `.env` all'avvio. Il campo API Key nell'interfaccia è opzionale: se vuoto, usa la chiave dal file `.env`.  
+Il file `.env` è escluso da git (vedi `.gitignore`). Usa `.env.example` come modello.
+
+---
+
 ## Struttura del progetto
 
 ```text
 .
-├── app.py           ← UI Gradio con editor, tema, anteprime e generazione PDF
+├── app.py           ← UI Gradio con editor, tema, anteprime, generazione PDF e ottimizzazione LLM
 ├── processMd.py     ← motore PDF e gestione palette/temi
 ├── palette/         ← immagini palette selezionabili dalla UI
+├── .env             ← credenziali locali (non versionato)
+├── .env.example     ← modello per le credenziali
 ├── input/
 │   └── post.md
 └── output/
@@ -126,7 +155,9 @@ process_md_file("input/post.md", selected_palette="AdobeColor-Offender 2020.jpeg
 - `reportlab`
 - `Pillow`
 - `gradio`
+- `openai` *(opzionale — necessario per l'ottimizzazione LLM)*
+- `python-dotenv` *(opzionale — per caricare le credenziali da `.env`)*
 
 ```bash
-pip install reportlab pillow gradio
+pip install -r requirements.txt
 ```
