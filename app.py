@@ -8,6 +8,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import gradio as gr
 
+try:
+    from dotenv import load_dotenv as _load_dotenv
+    _DOTENV_AVAILABLE = True
+except ImportError:
+    _DOTENV_AVAILABLE = False
+
+try:
+    from openai import OpenAI as _OpenAI
+    _OPENAI_AVAILABLE = True
+except ImportError:
+    _OPENAI_AVAILABLE = False
+
+if _DOTENV_AVAILABLE:
+    _load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
 from processMd import get_palette_roles, list_palette_files, process_md_file
 
 _INPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "input")
@@ -47,6 +62,90 @@ def generate_pdfs(content: str, filename: str, selected_palette: str):
         return output_paths, f"✅ Generati {len(output_paths)} PDF{theme_msg}"
     except Exception as exc:
         return None, f"❌ Errore: {exc}"
+
+
+_OPTIMIZE_SYSTEM_PROMPT = """\
+Sei un esperto di content marketing per LinkedIn. Il tuo compito è ottimizzare \
+un carosello LinkedIn scritto in Markdown per massimizzare l'engagement.
+
+Regole da rispettare SEMPRE:
+- Mantieni ESATTAMENTE la stessa struttura del documento: stesso numero di slide, \
+stessi separatori `----`, stessa gerarchia di heading (#, ##, ###).
+- Non aggiungere né rimuovere slide.
+- Migliora il tono: più diretto, autorevole e coinvolgente per un pubblico professionale.
+- Rendi i titoli più incisivi e le bullet point più concrete.
+- Mantieni la formattazione Markdown esistente (**grassetto**, *corsivo*, __sottolineato__, ecc.).
+- Rispondi SOLO con il Markdown ottimizzato, senza spiegazioni aggiuntive.
+"""
+
+
+_SPLIT_SYSTEM_PROMPT = """\
+Sei un esperto di content design per caroselli LinkedIn.
+Riceverai un testo unico (potenzialmente non ancora diviso in slide) e dovrai
+trasformarlo in un carosello Markdown pronto all'uso.
+
+Regole da rispettare SEMPRE:
+- Restituisci solo Markdown, senza spiegazioni extra.
+- Suddividi il contenuto in slide usando il separatore esatto: `----` su una riga singola.
+- Crea tipicamente tra 6 e 10 slide, in base alla lunghezza del testo.
+- Ogni slide deve avere un titolo breve e chiaro (`#`, `##` o `###`) e contenuto sintetico.
+- Mantieni tono professionale, concreto e orientato al valore.
+- Evita blocchi lunghi: preferisci frasi brevi e bullet point.
+"""
+
+
+def _resolve_openai_key(api_key: str) -> str:
+    return (api_key or "").strip() or os.environ.get("OPENAI_API_KEY", "")
+
+
+def optimize_with_llm(content: str, api_key: str) -> tuple[str, str]:
+    """Call GPT-4o to optimize the LinkedIn carousel markdown."""
+    if not _OPENAI_AVAILABLE:
+        return content, "❌ Libreria 'openai' non installata. Esegui: pip install openai"
+    key = _resolve_openai_key(api_key)
+    if not key:
+        return content, "❌ Inserisci una OpenAI API Key oppure definisci OPENAI_API_KEY nel file .env."
+    if not (content or "").strip():
+        return content, "❌ L'editor è vuoto."
+    try:
+        client = _OpenAI(api_key=key)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": _OPTIMIZE_SYSTEM_PROMPT},
+                {"role": "user", "content": content},
+            ],
+            temperature=0.7,
+        )
+        optimized = response.choices[0].message.content or content
+        return optimized, "✅ Testo ottimizzato con GPT-4o."
+    except Exception as exc:
+        return content, f"❌ Errore OpenAI: {exc}"
+
+
+def split_into_carousel_with_llm(content: str, api_key: str) -> tuple[str, str]:
+    """Split a long text into Markdown slides for a LinkedIn carousel."""
+    if not _OPENAI_AVAILABLE:
+        return content, "❌ Libreria 'openai' non installata. Esegui: pip install openai"
+    key = _resolve_openai_key(api_key)
+    if not key:
+        return content, "❌ Inserisci una OpenAI API Key oppure definisci OPENAI_API_KEY nel file .env."
+    if not (content or "").strip():
+        return content, "❌ L'editor è vuoto."
+    try:
+        client = _OpenAI(api_key=key)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": _SPLIT_SYSTEM_PROMPT},
+                {"role": "user", "content": content},
+            ],
+            temperature=0.5,
+        )
+        split_markdown = response.choices[0].message.content or content
+        return split_markdown, "✅ Testo suddiviso in slide per carousel."
+    except Exception as exc:
+        return content, f"❌ Errore OpenAI: {exc}"
 
 
 def _render_palette_swatches(selected_palette: str) -> str:
@@ -402,6 +501,23 @@ with gr.Blocks(title="LinkedIn Carousel Editor") as demo:
 
     status_box = gr.Textbox(label="Stato", interactive=False, max_lines=2)
 
+    # ── LLM Optimization ─────────────────────────────────────────────────────
+    with gr.Accordion("🤖 Ottimizzazione LLM (GPT-4o)", open=False):
+        gr.Markdown(
+            "Ottimizza il carosello per migliorare tono ed engagement su LinkedIn. "
+            "Lascia il campo vuoto per usare OPENAI_API_KEY caricata automaticamente da .env."
+        )
+        with gr.Row():
+            openai_key_input = gr.Textbox(
+                label="OpenAI API Key",
+                placeholder="sk-... (opzionale se già impostata nell'ambiente)",
+                type="password",
+                scale=3,
+                max_lines=1,
+            )
+            optimize_btn = gr.Button("✨ Ottimizza per LinkedIn", variant="primary", scale=1)
+            split_btn = gr.Button("🧩 Suddividi in slide", variant="secondary", scale=1)
+
     with gr.Row():
         md_download  = gr.File(label="File .md salvato",  interactive=False)
         pdf_download = gr.File(label="PDF generati",       interactive=False, file_count="multiple")
@@ -423,6 +539,18 @@ with gr.Blocks(title="LinkedIn Carousel Editor") as demo:
     # Save / Generate
     save_btn.click(fn=save_md,       inputs=[editor, filename_input], outputs=[md_download,  status_box])
     pdf_btn.click( fn=generate_pdfs, inputs=[editor, filename_input, palette_dropdown], outputs=[pdf_download, status_box])
+
+    # LLM optimization — updates editor content and status
+    optimize_btn.click(
+        fn=optimize_with_llm,
+        inputs=[editor, openai_key_input],
+        outputs=[editor, status_box],
+    )
+    split_btn.click(
+        fn=split_into_carousel_with_llm,
+        inputs=[editor, openai_key_input],
+        outputs=[editor, status_box],
+    )
 
 
 if __name__ == "__main__":
