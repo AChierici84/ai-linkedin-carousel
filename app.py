@@ -2,6 +2,8 @@ import os
 import re as _re
 import sys
 import math
+import base64
+import hashlib
 from html import escape as _escape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -26,6 +28,7 @@ if _DOTENV_AVAILABLE:
 from processMd import get_palette_roles, list_palette_files, process_md_file
 
 _INPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "input")
+_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
 
 
 # ── Python helpers ────────────────────────────────────────────────────────────
@@ -52,14 +55,144 @@ def save_md(content: str, filename: str):
     return filepath, f"✅ Salvato: {filepath}"
 
 
-def generate_pdfs(content: str, filename: str, selected_palette: str):
+def _generate_cover_image_from_text(cover_text: str, api_key: str) -> tuple[str | None, str]:
+    prompt = (cover_text or "").strip()
+    if not prompt:
+        return None, ""
+    if not _OPENAI_AVAILABLE:
+        return None, "❌ Libreria 'openai' non installata. Esegui: pip install openai"
+
+    key = _resolve_openai_key(api_key)
+    if not key:
+        return None, "❌ Per generare la copertina serve una OpenAI API Key (campo oppure .env)."
+
+    try:
+        client = _OpenAI(api_key=key)
+        response = client.images.generate(
+            model="gpt-image-1",
+            prompt=(
+                "Crea una copertina professionale per carosello LinkedIn, senza testo o loghi. "
+                f"Tema: {prompt}"
+            ),
+            size="1024x1024",
+        )
+        b64_data = response.data[0].b64_json if response.data else None
+        if not b64_data:
+            return None, "❌ OpenAI non ha restituito dati immagine per la copertina."
+
+        os.makedirs(_OUTPUT_DIR, exist_ok=True)
+        cover_dir = os.path.join(_OUTPUT_DIR, "covers")
+        os.makedirs(cover_dir, exist_ok=True)
+        safe_name = _re.sub(r"[^a-zA-Z0-9_-]+", "_", prompt).strip("_")[:48] or "cover"
+        cover_path = os.path.join(cover_dir, f"cover_{safe_name}.png")
+        with open(cover_path, "wb") as fh:
+            fh.write(base64.b64decode(b64_data))
+        return cover_path, ""
+    except Exception as exc:
+        return None, f"❌ Errore generazione copertina: {exc}"
+
+
+def _store_uploaded_cover(uploaded_cover_path: str) -> tuple[str | None, str]:
+    if not uploaded_cover_path:
+        return None, ""
+    if not os.path.isfile(uploaded_cover_path):
+        return None, "❌ File copertina caricato non trovato."
+
+    try:
+        with open(uploaded_cover_path, "rb") as src:
+            data = src.read()
+        digest = hashlib.md5(data).hexdigest()[:12]
+        ext = os.path.splitext(uploaded_cover_path)[1].lower() or ".png"
+        if ext not in {".png", ".jpg", ".jpeg", ".webp"}:
+            ext = ".png"
+
+        cover_dir = os.path.join(_OUTPUT_DIR, "covers")
+        os.makedirs(cover_dir, exist_ok=True)
+        stored_path = os.path.join(cover_dir, f"upload_{digest}{ext}")
+        with open(stored_path, "wb") as dst:
+            dst.write(data)
+        return stored_path, ""
+    except Exception as exc:
+        return None, f"❌ Errore salvataggio copertina caricata: {exc}"
+
+
+def generate_cover_preview_from_text(cover_text: str, api_key: str):
+    cover_path, cover_error = _generate_cover_image_from_text(cover_text, api_key)
+    if cover_error:
+        return None, None, cover_error
+    if not cover_path:
+        return None, None, "❌ Inserisci un testo per generare la copertina."
+    return cover_path, cover_path, "✅ Copertina generata."
+
+
+def use_uploaded_cover(uploaded_cover_path: str):
+    cover_path, cover_error = _store_uploaded_cover(uploaded_cover_path)
+    if cover_error:
+        return None, None, cover_error
+    if not cover_path:
+        return None, None, ""
+    return cover_path, cover_path, "✅ Copertina caricata."
+
+
+def reset_cover_selection():
+    return None, None, None, False, "✅ Copertina resettata."
+
+
+def _resolve_cover_for_pdf(
+    use_cover: bool,
+    cached_cover_path: str,
+    cover_text: str,
+    api_key: str,
+) -> tuple[str | None, str]:
+    if not use_cover:
+        return None, ""
+
+    if cached_cover_path and os.path.isfile(cached_cover_path):
+        return cached_cover_path, ""
+
+    if (cover_text or "").strip():
+        return _generate_cover_image_from_text(cover_text, api_key)
+
+    return None, ""
+
+
+def generate_pdfs(
+    content: str,
+    filename: str,
+    selected_palette: str,
+    use_cover: bool,
+    extract_cover_colors: bool,
+    cached_cover_path: str,
+    cover_text: str,
+    api_key: str,
+):
     filepath, msg = save_md(content, filename)
     if "❌" in msg:
         return None, msg
+
+    cover_path, cover_error = _resolve_cover_for_pdf(
+        use_cover,
+        cached_cover_path,
+        cover_text,
+        api_key,
+    )
+    if cover_error:
+        return None, cover_error
+
+    if use_cover and not cover_path:
+        return None, "❌ Copertina attiva ma non disponibile. Genera da testo o carica un'immagine."
+
+    pdf_palette = cover_path if (extract_cover_colors and cover_path) else selected_palette
+
     try:
-        output_paths = process_md_file(filepath, selected_palette=selected_palette)
-        theme_msg = f" con palette '{selected_palette}'" if selected_palette else ""
-        return output_paths, f"✅ Generati {len(output_paths)} PDF{theme_msg}"
+        output_paths = process_md_file(
+            filepath,
+            selected_palette=pdf_palette,
+            cover_image_path=cover_path,
+        )
+        theme_msg = " con palette da copertina" if extract_cover_colors and cover_path else (f" con palette '{selected_palette}'" if selected_palette else "")
+        cover_msg = " con copertina" if cover_path else ""
+        return output_paths, f"✅ Generati {len(output_paths)} PDF{theme_msg}{cover_msg}"
     except Exception as exc:
         return None, f"❌ Errore: {exc}"
 
@@ -328,6 +461,21 @@ def refresh_theme_preview(content: str, selected_palette: str):
     return _render_palette_swatches(selected_palette), _render_pdf_preview(content, selected_palette)
 
 
+def refresh_palette_with_cover(
+    content: str,
+    extract_cover_colors: bool,
+    cached_cover_path: str,
+    selected_palette: str,
+):
+    """Refresh palette preview based on extract_cover_colors checkbox state."""
+    if extract_cover_colors and cached_cover_path:
+        palette_path = cached_cover_path
+    else:
+        palette_path = selected_palette
+    
+    return _render_palette_swatches(palette_path), _render_pdf_preview(content, palette_path)
+
+
 # ── JavaScript for toolbar buttons ───────────────────────────────────────────
 # Each function runs entirely client-side; the return value updates the editor.
 
@@ -499,6 +647,45 @@ with gr.Blocks(title="LinkedIn Carousel Editor") as demo:
         save_btn = gr.Button("💾 Salva .md",   variant="secondary", scale=1)
         pdf_btn  = gr.Button("📄 Genera PDF",  variant="primary",   scale=2)
 
+    cover_state = gr.State(value=None)
+    use_cover_checkbox = gr.Checkbox(
+        value=False,
+        label="Usa copertina come prima slide",
+        info="Se attivo, la copertina viene inserita all'inizio con la prima riga del post.",
+    )
+
+    extract_cover_colors_checkbox = gr.Checkbox(
+        value=False,
+        label="Estrai colori da copertina come palette",
+        info="Se attivo, i colori della copertina vengono usati come palette del PDF.",
+    )
+
+    cover_text_input = gr.Textbox(
+        label="Copertina (opzionale)",
+        info="Inserisci un testo/prompt: verrà generata una cover usata come prima slide con la prima riga del post.",
+        placeholder="Es. Strategia AI per PMI nel 2026",
+        max_lines=2,
+    )
+
+    with gr.Row():
+        uploaded_cover_input = gr.Image(
+            label="Carica copertina manuale (opzionale)",
+            type="filepath",
+            image_mode="RGB",
+            sources=["upload"],
+            height=240,
+        )
+        cover_preview_image = gr.Image(
+            label="Anteprima copertina selezionata",
+            type="filepath",
+            interactive=False,
+            height=240,
+        )
+
+    with gr.Row():
+        generate_cover_btn = gr.Button("🎨 Genera copertina AI", variant="secondary")
+        reset_cover_btn = gr.Button("♻️ Reset copertina", variant="secondary")
+
     status_box = gr.Textbox(label="Stato", interactive=False, max_lines=2)
 
     # ── LLM Optimization ─────────────────────────────────────────────────────
@@ -526,8 +713,17 @@ with gr.Blocks(title="LinkedIn Carousel Editor") as demo:
 
     # Live preview (Python — handles __underline__ conversion)
     editor.change(fn=_md_to_preview, inputs=editor, outputs=preview)
-    editor.change(fn=refresh_theme_preview, inputs=[editor, palette_dropdown], outputs=[palette_swatches, theme_preview])
+    editor.change(
+        fn=refresh_palette_with_cover,
+        inputs=[editor, extract_cover_colors_checkbox, cover_state, palette_dropdown],
+        outputs=[palette_swatches, theme_preview],
+    )
     palette_dropdown.change(fn=refresh_theme_preview, inputs=[editor, palette_dropdown], outputs=[palette_swatches, theme_preview])
+    extract_cover_colors_checkbox.change(
+        fn=refresh_palette_with_cover,
+        inputs=[editor, extract_cover_colors_checkbox, cover_state, palette_dropdown],
+        outputs=[palette_swatches, theme_preview],
+    )
 
     # Toolbar — pure JS, no Python round-trip
     bold_btn.click(     fn=None, js=_wrap_js("**", "**"), outputs=editor)
@@ -536,9 +732,40 @@ with gr.Blocks(title="LinkedIn Carousel Editor") as demo:
     link_btn.click(     fn=None, js=_LINK_JS,             outputs=editor)
     separator_btn.click(fn=None, js=_SEPARATOR_JS,        outputs=editor)
 
+    generate_cover_btn.click(
+        fn=generate_cover_preview_from_text,
+        inputs=[cover_text_input, openai_key_input],
+        outputs=[cover_preview_image, cover_state, status_box],
+    )
+
+    uploaded_cover_input.change(
+        fn=use_uploaded_cover,
+        inputs=[uploaded_cover_input],
+        outputs=[cover_preview_image, cover_state, status_box],
+    )
+
+    reset_cover_btn.click(
+        fn=reset_cover_selection,
+        inputs=None,
+        outputs=[uploaded_cover_input, cover_preview_image, cover_state, use_cover_checkbox, status_box],
+    )
+
     # Save / Generate
     save_btn.click(fn=save_md,       inputs=[editor, filename_input], outputs=[md_download,  status_box])
-    pdf_btn.click( fn=generate_pdfs, inputs=[editor, filename_input, palette_dropdown], outputs=[pdf_download, status_box])
+    pdf_btn.click(
+        fn=generate_pdfs,
+        inputs=[
+            editor,
+            filename_input,
+            palette_dropdown,
+            use_cover_checkbox,
+            extract_cover_colors_checkbox,
+            cover_state,
+            cover_text_input,
+            openai_key_input,
+        ],
+        outputs=[pdf_download, status_box],
+    )
 
     # LLM optimization — updates editor content and status
     optimize_btn.click(

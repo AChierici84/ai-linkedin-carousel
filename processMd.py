@@ -603,6 +603,61 @@ def _draw_background(pdf, background_image_path, page_width, page_height):
         )
 
 
+def _first_non_empty_line_from_slides(processed_contents):
+    for slide in processed_contents:
+        for raw_line in slide.splitlines():
+            line = raw_line.strip()
+            if line:
+                line = re.sub(r"^#{1,6}\s+", "", line)
+                line = re.sub(r"^[-*]\s+", "", line)
+                return line
+    return ""
+
+
+def _split_cover_title_two_lines(title, max_chars=44):
+    text = re.sub(r"\s+", " ", (title or "")).strip()
+    if not text or len(text) <= max_chars or " " not in text:
+        return text
+
+    midpoint = len(text) // 2
+    split_idx = min((idx for idx, ch in enumerate(text) if ch == " "), key=lambda idx: abs(idx - midpoint), default=-1)
+    if split_idx <= 0 or split_idx >= len(text) - 1:
+        return text
+
+    left = text[:split_idx].strip()
+    right = text[split_idx + 1 :].strip()
+    if not left or not right:
+        return text
+    return f"{left}<br/>{right}"
+
+
+def _draw_cover_slide(pdf, cover_image_path, page_width, page_height, cover_title):
+    _draw_background(pdf, cover_image_path, page_width, page_height)
+    background_rgb = _get_background_reference_rgb(cover_image_path)
+    title_hex = _pick_readable_hex("#FFFFFF", background_rgb, min_ratio=4.5)
+    title_color = HexColor(title_hex)
+
+    text_width = page_width * 0.72
+    inset_x = (page_width - text_width) / 2
+    title_style = ParagraphStyle(
+        "cover_title",
+        fontName="Helvetica-Bold",
+        fontSize=56,
+        leading=64,
+        alignment=1,
+        textColor=title_color,
+    )
+
+    split_title = _split_cover_title_two_lines(cover_title)
+    content = _markdown_inline_to_html((split_title or "").strip(), None)
+    if not content:
+        content = "Copertina"
+    paragraph = Paragraph(content, title_style)
+    _w, h = paragraph.wrap(text_width, page_height * 0.8)
+    y = page_height - 140
+    paragraph.drawOn(pdf, inset_x, y - h)
+
+
 def _is_dark_background(background_image_path):
     if isinstance(background_image_path, Image.Image):
         rgb_image = background_image_path.convert("RGB")
@@ -749,7 +804,14 @@ def _get_styles_for_background(background_image_path, scale=1.0, theme_name=None
     return _build_styles(colors["title_color"], colors["text_color"], scale)
 
 
-def _generate_pdf(processed_contents, output_pdf_path, background_path_provider, theme_name_provider=None, theme_override_provider=None):
+def _generate_pdf(
+    processed_contents,
+    output_pdf_path,
+    background_path_provider,
+    theme_name_provider=None,
+    theme_override_provider=None,
+    cover_image_path=None,
+):
     output_dir = os.path.join(PROJECT_ROOT, "output")
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir, exist_ok=True)
@@ -767,6 +829,12 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
     pdf = canvas.Canvas(output_pdf_path, pagesize=CX)
 
     usable_height = page_height - top_margin - bottom_margin
+
+    if cover_image_path:
+        cover_title = _first_non_empty_line_from_slides(processed_contents)
+        _draw_cover_slide(pdf, cover_image_path, page_width, page_height, cover_title)
+        if processed_contents:
+            pdf.showPage()
 
     for slide_index, slide in enumerate(processed_contents):
         background_image_path = background_path_provider(slide_index, slide)
@@ -836,7 +904,7 @@ def _generate_pdf(processed_contents, output_pdf_path, background_path_provider,
     return output_pdf_path
 
 
-def _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path):
+def _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path, cover_image_path=None):
     output_dir = os.path.join(PROJECT_ROOT, "output")
     input_name = os.path.splitext(os.path.basename(input_file_path))[0]
     combined_content = "\n".join(processed_contents)
@@ -854,6 +922,7 @@ def _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path):
                 output_pdf_path,
                 lambda _slide_index, _slide, image=auto_background_image: image,
                 lambda _slide_index, _slide, name=resolved_theme_name: name,
+                cover_image_path=cover_image_path,
             )
         )
 
@@ -865,7 +934,7 @@ def _slugify(value):
     return safe or "palette"
 
 
-def _generate_pdf_with_selected_palette(processed_contents, input_file_path, palette_name_or_path):
+def _generate_pdf_with_selected_palette(processed_contents, input_file_path, palette_name_or_path, cover_image_path=None):
     output_dir = os.path.join(PROJECT_ROOT, "output")
     input_name = os.path.splitext(os.path.basename(input_file_path))[0]
     palette_path = _resolve_palette_path(palette_name_or_path)
@@ -882,17 +951,18 @@ def _generate_pdf_with_selected_palette(processed_contents, input_file_path, pal
         lambda _slide_index, _slide, image=auto_background_image: image,
         lambda _slide_index, _slide: None,
         lambda _slide_index, _slide, theme=custom_theme: theme,
+        cover_image_path=cover_image_path,
     )
     return [generated]
 
 
-def generatePdf(processed_contents, input_file_path, selected_palette=None):
+def generatePdf(processed_contents, input_file_path, selected_palette=None, cover_image_path=None):
     _register_optional_fonts()
     if selected_palette:
-        return _generate_pdf_with_selected_palette(processed_contents, input_file_path, selected_palette)
-    return _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path)
+        return _generate_pdf_with_selected_palette(processed_contents, input_file_path, selected_palette, cover_image_path)
+    return _generate_pdf_with_auto_backgrounds(processed_contents, input_file_path, cover_image_path)
 
-def process_md_file(file_path, selected_palette=None):
+def process_md_file(file_path, selected_palette=None, cover_image_path=None):
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
@@ -909,7 +979,7 @@ def process_md_file(file_path, selected_palette=None):
     if processed_content:
         processed_contents.append(processed_content)
     
-    return generatePdf(processed_contents, file_path, selected_palette)
+    return generatePdf(processed_contents, file_path, selected_palette, cover_image_path)
 
 
 if __name__ == "__main__":

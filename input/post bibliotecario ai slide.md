@@ -1,7 +1,6 @@
-# Catalogo AI 
-# nelle Biblioteche
+# Rivoluzione AI nelle Biblioteche
 
-Dopo anni nel settore dei motori di ricerca, so quanto sia complesso creare un sistema perfetto per le biblioteche. Migliaia di libri, metadati limitati, e ricerche complesse sono solo alcune delle sfide.
+Dopo 15 anni nel settore dei motori di ricerca, so quanto sia complesso creare un sistema perfetto per le biblioteche. Migliaia di libri, metadati limitati, e ricerche complesse sono solo alcune delle sfide.
 
 ----
 

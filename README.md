@@ -27,6 +27,9 @@ Si apre automaticamente il browser su `http://localhost:7860`.
 - **Colori palette in riga** con ruoli visivi mostrati nella UI
 - **Anteprima live** del Markdown in tab dedicato
 - **Anteprima PDF** in tab dedicato con gradiente, font e colori coerenti con il PDF finale
+- **Copertina opzionale**: generazione AI da prompt o caricamento manuale
+- **Anteprima copertina** in UI prima dell'export
+- **Toggle "Usa copertina come prima slide"** per attivare/disattivare l'inserimento cover nel PDF
 - **Salva .md** → salva il file in `input/` e offre il download
 - **Genera PDF** → salva il file e produce un PDF usando la palette selezionata
 - **Sezione 🤖 Ottimizzazione LLM (GPT-4o)** con due pulsanti:
@@ -70,6 +73,7 @@ Da CLI il motore usa la selezione automatica dei temi; dalla UI puoi invece forz
 - I temi automatici (`ai`, `vision`, `health`, `data`, `growth`, `business`, `finance`, `security`, `education`, `manual`, `general`) sono mappati a file palette reali
 - In modalità automatica i file generati hanno nome simile a `{file}_auto_<palette>.pdf`
 - In modalità manuale il file generato ha nome simile a `{file}_palette_<palette>.pdf`
+- Se la copertina è attiva, viene inserita come **prima slide** con solo la **prima riga del post** in colore leggibile automatico
 
 ---
 
